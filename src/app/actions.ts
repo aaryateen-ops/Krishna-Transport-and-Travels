@@ -13,6 +13,7 @@ export interface InquiryData {
   goodsType: string;
   weight?: string;
   notes?: string;
+  email?: string;
 }
 
 // Helper to generate unique Inquiry Code (KT-DDMM-123)
@@ -65,6 +66,7 @@ export async function submitInquiry(data: InquiryData) {
           notes: data.notes || null,
           status: "pending",
           redirected_to_whatsapp: true,
+          email: data.email || null,
         },
       ]);
 
@@ -139,12 +141,16 @@ export async function getInquiryByCode(code: string) {
 }
 
 // 3. Fetch all inquiries for admin
-export async function getInquiries(password: string) {
-  if (!verifyAdmin(password)) {
-    return { success: false, error: "Invalid admin password." };
-  }
-
+export async function getInquiries(token: string) {
   try {
+    if (!token) return { success: false, error: "Session token is required." };
+    
+    // Verify user JWT token using Supabase Auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
     const { data, error } = await supabaseAdmin
       .from("inquiries")
       .select("*")
@@ -175,13 +181,17 @@ export interface OperationalUpdateData {
 export async function updateInquiryOperations(
   id: string, 
   updateData: OperationalUpdateData, 
-  password: string
+  token: string
 ) {
-  if (!verifyAdmin(password)) {
-    return { success: false, error: "Invalid admin password." };
-  }
-
   try {
+    if (!token) return { success: false, error: "Session token is required." };
+    
+    // Verify user JWT token using Supabase Auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
     const { error } = await supabaseAdmin
       .from("inquiries")
       .update({
@@ -207,12 +217,16 @@ export async function updateInquiryOperations(
 }
 
 // 5. Delete an inquiry (spam cleanup)
-export async function deleteInquiry(id: string, password: string) {
-  if (!verifyAdmin(password)) {
-    return { success: false, error: "Invalid admin password." };
-  }
-
+export async function deleteInquiry(id: string, token: string) {
   try {
+    if (!token) return { success: false, error: "Session token is required." };
+    
+    // Verify user JWT token using Supabase Auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
     const { error } = await supabaseAdmin
       .from("inquiries")
       .delete()
@@ -226,6 +240,37 @@ export async function deleteInquiry(id: string, password: string) {
     return { success: true };
   } catch (err: any) {
     console.error("Admin delete exception:", err);
+    return { success: false, error: "An unexpected error occurred." };
+  }
+}
+
+// 5.5 Fetch all inquiries for a specific customer email (secure, JWT verified)
+export async function getCustomerInquiries(email: string, token: string) {
+  try {
+    if (!email) return { success: false, error: "Customer email is required." };
+    if (!token) return { success: false, error: "Session token is required." };
+
+    // Verify the JWT token belongs to the requested email
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== email.trim()) {
+      return { success: false, error: "Unauthorized access." };
+    }
+
+    // Fetch using supabaseAdmin to bypass RLS select safely
+    const { data, error } = await supabaseAdmin
+      .from("inquiries")
+      .select("*")
+      .eq("email", email.trim())
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Fetch customer inquiries error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, inquiries: data };
+  } catch (err) {
+    console.error("Fetch customer inquiries exception:", err);
     return { success: false, error: "An unexpected error occurred." };
   }
 }

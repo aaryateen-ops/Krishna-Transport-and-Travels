@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import InquiryForm from "@/components/InquiryForm";
+import HeaderAuth from "@/components/HeaderAuth";
 import { 
   Truck, 
   Package, 
@@ -176,6 +177,9 @@ export default async function Home({ searchParams }: PageProps) {
           </Link>
 
           <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Portal Auth Gate */}
+            <HeaderAuth />
+
             {/* Track: Icon on mobile, text on desktop */}
             <Link 
               href="/track"
@@ -783,8 +787,8 @@ export default async function Home({ searchParams }: PageProps) {
               <span className="text-slate-700">|</span>
               <span>Headquarters: <strong className="text-slate-400">Varanasi, UP</strong></span>
               <span className="text-slate-700">|</span>
-              <Link href="/admin" className="text-slate-650 hover:text-slate-400 transition-colors" title="Admin Gate">
-                <Lock className="w-3 h-3 inline align-middle" />
+              <Link href="/login" className="text-slate-500 hover:text-primary-800 transition-colors flex items-center gap-1 font-bold" title="Portal Login">
+                <Lock className="w-3 h-3 inline align-middle text-slate-400" /> Portal Login
               </Link>
             </div>
           </div>

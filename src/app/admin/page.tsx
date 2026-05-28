@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import { getInquiries, updateInquiryOperations, deleteInquiry, OperationalUpdateData } from "@/app/actions";
 import { 
   Lock, 
@@ -48,14 +50,47 @@ export default function AdminDashboard() {
   const [isPending, startTransition] = useTransition();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  // Load password from localStorage if saved
+  const router = useRouter();
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Load and verify Supabase Auth session on mount
   useEffect(() => {
-    const savedPassword = localStorage.getItem("krishna_admin_password");
-    if (savedPassword) {
-      setPassword(savedPassword);
-      handleLogin(savedPassword);
+    async function verifyAdminSession() {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session || !session.user) {
+          router.push("/login");
+          return;
+        }
+
+        const userEmail = session.user.email;
+        if (userEmail !== "rohitsingh0641346@gmail.com") {
+          router.push("/dashboard");
+          return;
+        }
+
+        const token = session.access_token;
+        setPassword(token);
+        localStorage.setItem("krishna_admin_password", token);
+        
+        // Fetch inquiries using access token
+        const result = await getInquiries(token);
+        if (result.success && result.inquiries) {
+          setInquiries(result.inquiries);
+          setIsAuthorized(true);
+        } else {
+          setError(result.error || "Failed to load inquiries.");
+        }
+      } catch (err) {
+        console.error("Admin verification exception:", err);
+        setError("Connection error. Please try logging in again.");
+      } finally {
+        setCheckingSession(false);
+      }
     }
-  }, []);
+    verifyAdminSession();
+  }, [router]);
 
   // Initialize input form states when inquiries list is fetched
   useEffect(() => {
@@ -75,43 +110,21 @@ export default function AdminDashboard() {
     }
   }, [inquiries]);
 
-  const handleLogin = async (overridePassword?: string) => {
-    const pwdToUse = overridePassword || password;
-    if (!pwdToUse) return;
-
-    setLoginLoading(true);
-    setError("");
-
+  const handleLogout = async () => {
     try {
-      const result = await getInquiries(pwdToUse);
-
-      if (result.success && result.inquiries) {
-        setInquiries(result.inquiries);
-        setIsAuthorized(true);
-        localStorage.setItem("krishna_admin_password", pwdToUse);
-      } else {
-        setError(result.error || "Authorization failed.");
-        localStorage.removeItem("krishna_admin_password");
-        setIsAuthorized(false);
-      }
-    } catch (err: any) {
-      console.error("Login error:", err);
-      setError("Server connection failed. Make sure you redeployed Vercel after adding Env Variables.");
+      await supabase.auth.signOut();
       localStorage.removeItem("krishna_admin_password");
+      setPassword("");
+      setInquiries([]);
       setIsAuthorized(false);
-    } finally {
-      setLoginLoading(false);
+      router.push("/login");
+    } catch (err) {
+      console.error("Logout exception:", err);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("krishna_admin_password");
-    setPassword("");
-    setInquiries([]);
-    setIsAuthorized(false);
-  };
-
   const handleRefresh = async () => {
+    if (!password) return;
     setRefreshLoading(true);
     const result = await getInquiries(password);
     if (result.success && result.inquiries) {
@@ -235,59 +248,31 @@ export default function AdminDashboard() {
   const completedCount = inquiries.filter((i) => i.status === "completed").length;
   const cancelledCount = inquiries.filter((i) => i.status === "cancelled").length;
 
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <RefreshCw className="w-10 h-10 text-primary-600 animate-spin" />
+        <p className="mt-4 text-sm font-semibold text-slate-500">Verifying admin session...</p>
+      </div>
+    );
+  }
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl max-w-md w-full border border-slate-100 relative overflow-hidden">
-          {/* Top border gradient line */}
-          <div className="absolute top-0 left-0 right-0 h-[4px] bg-gradient-to-r from-primary-800 to-accent-500"></div>
-
-          <div className="flex flex-col items-center text-center gap-4 mb-6">
-            <div className="w-14 h-14 bg-primary-50 text-primary-800 rounded-full flex items-center justify-center">
-              <Lock className="w-6 h-6" />
-            </div>
-            <h1 className="font-display font-extrabold text-2xl text-primary-800">Admin Area Gate</h1>
-            <p className="text-sm text-slate-500">Enter the administration password to access lead logs.</p>
+        <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl max-w-md w-full border border-slate-100 relative overflow-hidden text-center">
+          <div className="absolute top-0 left-0 right-0 h-[4px] bg-red-500"></div>
+          <div className="w-14 h-14 bg-red-50 text-red-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-6 h-6" />
           </div>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleLogin();
-            }}
-            className="flex flex-col gap-4"
+          <h1 className="font-display font-extrabold text-2xl text-red-650 mb-2">Access Denied</h1>
+          <p className="text-sm text-slate-500 mb-6">{error || "You do not have permission to access the admin dashboard."}</p>
+          <button
+            onClick={() => router.push("/login")}
+            className="w-full py-3 bg-primary-800 hover:bg-primary-900 text-white font-extrabold rounded-xl transition-all shadow-md cursor-pointer"
           >
-            {error && (
-              <div className="bg-red-50 text-red-700 border border-red-100 p-3 rounded-xl text-sm font-semibold">
-                {error}
-              </div>
-            )}
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
-              <input
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent text-sm bg-slate-50/50"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loginLoading}
-              className="w-full py-3.5 bg-primary-800 hover:bg-primary-900 text-white font-extrabold rounded-xl transition-all shadow-md shadow-primary-800/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {loginLoading ? (
-                <>
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                  Checking...
-                </>
-              ) : (
-                "Unlock Dashboard"
-              )}
-            </button>
-          </form>
+            Go to Login
+          </button>
         </div>
       </div>
     );

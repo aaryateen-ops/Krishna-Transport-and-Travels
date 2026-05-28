@@ -18,6 +18,7 @@ import {
   Navigation
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons";
+import { supabase } from "@/lib/supabase";
 
 interface InquiryFormProps {
   initialService?: string;
@@ -34,6 +35,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
     goodsType: initialService || "",
     weight: "",
     notes: "",
+    email: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -49,6 +51,43 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
         clearInterval(redirectTimerRef.current);
       }
     };
+  }, []);
+
+  // Load session or query parameters to prefill form
+  useEffect(() => {
+    async function prefillForm() {
+      // 1. Try URL parameters first
+      const params = new URLSearchParams(window.location.search);
+      const urlName = params.get("name");
+      const urlPhone = params.get("phone");
+      const urlEmail = params.get("email");
+
+      let prefilledName = urlName || "";
+      let prefilledPhone = urlPhone || "";
+      let prefilledEmail = urlEmail || "";
+
+      // 2. If URL parameters are missing, try Supabase session
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user) {
+          const metadata = session.user.user_metadata || {};
+          if (!prefilledName) prefilledName = metadata.full_name || "";
+          if (!prefilledPhone) prefilledPhone = metadata.phone_number || "";
+          if (!prefilledEmail) prefilledEmail = session.user.email || "";
+        }
+      } catch (err) {
+        console.error("InquiryForm prefill session error:", err);
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prefilledName,
+        phoneNumber: prefilledPhone,
+        email: prefilledEmail,
+      }));
+    }
+
+    prefillForm();
   }, []);
 
   useEffect(() => {
@@ -179,7 +218,13 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
 
       <div>
         <h3 className="text-2xl font-display font-extrabold text-primary-800 mb-1">Get Instant Free Quote</h3>
-        <p className="text-xs sm:text-sm text-slate-500">Fill in details. Rohit will coordinate best rates manually on WhatsApp!</p>
+        {formData.email ? (
+          <p className="text-xs text-green-700 bg-green-50/50 border border-green-150 rounded-xl px-3 py-1.5 inline-flex items-center gap-1.5 mt-1 font-bold">
+            <CheckCircle className="w-3.5 h-3.5 text-green-500 animate-pulse" /> Booking linked to your account ({formData.email})
+          </p>
+        ) : (
+          <p className="text-xs sm:text-sm text-slate-500">Fill in details. Rohit will coordinate best rates manually on WhatsApp!</p>
+        )}
       </div>
 
       {status.error && (
