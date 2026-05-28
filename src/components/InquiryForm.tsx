@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { submitInquiry, InquiryData } from "@/app/actions";
 import { 
   Send, 
@@ -40,6 +40,16 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
   const [status, setStatus] = useState<{ success?: boolean; error?: string }>({});
   const [inquiryCode, setInquiryCode] = useState("");
   const [redirectCount, setRedirectCount] = useState<number | null>(null);
+
+  const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearInterval(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (initialService) {
@@ -89,6 +99,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
           window.location.href = result.redirectUrl as string;
         }
       }, 1000);
+      redirectTimerRef.current = timer;
     } else {
       setStatus({ error: result.error || "Submission failed. Please try again." });
       setLoading(false);
@@ -390,7 +401,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
       {/* Footer Notice */}
       <div className="flex items-center justify-center gap-3 text-xs font-semibold text-slate-500 border-t border-slate-100 pt-4 mt-1">
         <span>Min. booking from ₹600</span>
-        <span className="w-1.5 h-1.5 bg-slate-350 rounded-full"></span>
+        <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
         <span>Varanasi &amp; 10+ Districts</span>
       </div>
     </form>
