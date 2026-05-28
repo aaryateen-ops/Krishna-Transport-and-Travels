@@ -72,14 +72,20 @@ export default function TrackingDetailsPage() {
 
   const fetchInquiry = async (showLoader = false) => {
     if (showLoader) setLoading(true);
-    const result = await getInquiryByCode(code);
-    if (result.success && result.inquiry) {
-      setInquiry(result.inquiry);
-      setError("");
-    } else {
-      setError(result.error || "Failed to load tracking data.");
+    try {
+      const result = await getInquiryByCode(code);
+      if (result.success && result.inquiry) {
+        setInquiry(result.inquiry);
+        setError("");
+      } else {
+        setError(result.error || "Failed to load tracking data.");
+      }
+    } catch (err: any) {
+      console.error("Fetch inquiry error:", err);
+      setError("Server connection failed. Make sure you redeployed Vercel after adding Env Variables.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {

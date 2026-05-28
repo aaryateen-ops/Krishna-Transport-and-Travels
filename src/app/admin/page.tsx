@@ -82,18 +82,26 @@ export default function AdminDashboard() {
     setLoginLoading(true);
     setError("");
 
-    const result = await getInquiries(pwdToUse);
+    try {
+      const result = await getInquiries(pwdToUse);
 
-    if (result.success && result.inquiries) {
-      setInquiries(result.inquiries);
-      setIsAuthorized(true);
-      localStorage.setItem("krishna_admin_password", pwdToUse);
-    } else {
-      setError(result.error || "Authorization failed.");
+      if (result.success && result.inquiries) {
+        setInquiries(result.inquiries);
+        setIsAuthorized(true);
+        localStorage.setItem("krishna_admin_password", pwdToUse);
+      } else {
+        setError(result.error || "Authorization failed.");
+        localStorage.removeItem("krishna_admin_password");
+        setIsAuthorized(false);
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError("Server connection failed. Make sure you redeployed Vercel after adding Env Variables.");
       localStorage.removeItem("krishna_admin_password");
       setIsAuthorized(false);
+    } finally {
+      setLoginLoading(false);
     }
-    setLoginLoading(false);
   };
 
   const handleLogout = () => {
