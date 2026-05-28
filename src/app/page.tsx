@@ -20,7 +20,8 @@ import {
   Users, 
   ChevronRight,
   MapPin as MapPinIcon,
-  Search
+  Search,
+  Lock
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons";
 
@@ -781,6 +782,10 @@ export default async function Home({ searchParams }: PageProps) {
               <span>Owner: <strong className="text-slate-400">Rohit Kumar Singh</strong></span>
               <span className="text-slate-700">|</span>
               <span>Headquarters: <strong className="text-slate-400">Varanasi, UP</strong></span>
+              <span className="text-slate-700">|</span>
+              <Link href="/admin" className="text-slate-650 hover:text-slate-400 transition-colors" title="Admin Gate">
+                <Lock className="w-3 h-3 inline align-middle" />
+              </Link>
             </div>
           </div>
         </div>
