@@ -148,7 +148,7 @@ export default function InquiryForm({ initialService = "", lang = "hi" }: Inquir
 
   const labels = {
     hi: {
-      title: "गाड़ी का किराया जानें",
+      title: "गाड़ी बुक करें (Book a Ride)",
       linked: "बुकिंग आपके खाते से लिंक है",
       subtitle: "नीचे अपनी डिटेल्स भरें। फॉर्म भेजने के बाद रोहित भैया आपसे सीधे व्हाट्सएप या कॉल पर किराया तय कर लेंगे।",
       submitting: "बुकिंग दर्ज हो रही है...",
@@ -187,7 +187,7 @@ export default function InquiryForm({ initialService = "", lang = "hi" }: Inquir
       voiceNoteTip: "💡 सलाह: व्हाट्सएप खुलने पर आप रोहित भैया को बोलकर (वॉइस नोट भेजकर) भी किराया फाइनल कर सकते हैं।",
     },
     en: {
-      title: "Get Instant Free Quote",
+      title: "Book a Ride & Get Quote",
       linked: "Booking linked to your account",
       subtitle: "Fill in details. Rohit will coordinate best rates manually on WhatsApp!",
       submitting: "Submitting Inquiry...",
