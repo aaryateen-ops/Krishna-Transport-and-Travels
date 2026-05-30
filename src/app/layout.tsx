@@ -15,8 +15,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Krishna Transport & Travel Management | House Shifting & Tempo Service in Varanasi",
-  description: "Fast, trusted, and affordable local household shifting, mini truck/tempo booking, goods transport, and parcel delivery in Varanasi and surrounding districts.",
+  metadataBase: new URL("https://krishnatransports.com"),
+  title: "कृष्णा ट्रांसपोर्ट वाराणसी | ऑनलाइन गाड़ी बुकिंग & लाइव ट्रैकिंग",
+  description: "वाराणसी और आस-पास के जिलों में घर का सामान, दुकान का फर्नीचर या कोई भी पार्सल भेजें। टेम्पो या छोटा हाथी ऑनलाइन बुक करें और लाइव ट्रैक करें। किराया सिर्फ ₹600 से शुरू।",
   keywords: [
     "Tempo Service in Varanasi",
     "Pickup Service in Varanasi",
@@ -33,18 +34,32 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Krishna Transport",
+    title: "कृष्णा ट्रांसपोर्ट",
   },
   formatDetection: {
     telephone: true,
   },
   openGraph: {
-    title: "Krishna Transport & Travel Management Varanasi",
-    description: "Fast, trusted, and affordable local household shifting, mini truck/tempo booking, goods transport, and parcel delivery in Varanasi.",
+    title: "कृष्णा ट्रांसपोर्ट वाराणसी | ऑनलाइन गाड़ी बुकिंग & लाइव ट्रैकिंग",
+    description: "वाराणसी और आस-पास के जिलों में घर का सामान, दुकान का फर्नीचर या कोई भी पार्सल भेजें। टेम्पो या छोटा हाथी ऑनलाइन बुक करें और लाइव ट्रैक करें। किराया सिर्फ ₹600 से शुरू।",
     url: "https://krishna-transport.vercel.app", // placeholder vercel url
-    siteName: "Krishna Transport",
-    locale: "en_IN",
+    siteName: "कृष्णा ट्रांसपोर्ट",
+    locale: "hi_IN",
     type: "website",
+    images: [
+      {
+        url: "/og_banner.png",
+        width: 1200,
+        height: 630,
+        alt: "कृष्णा ट्रांसपोर्ट वाराणसी - ऑनलाइन गाड़ी बुकिंग और लाइव ट्रैकिंग",
+      }
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "कृष्णा ट्रांसपोर्ट वाराणसी | ऑनलाइन गाड़ी बुकिंग & लाइव ट्रैकिंग",
+    description: "वाराणसी और आस-पास के जिलों में सामान भेजें। गाड़ी ऑनलाइन बुक करें और लाइव ट्रैक करें।",
+    images: ["/og_banner.png"],
   }
 };
 
