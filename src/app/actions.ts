@@ -82,21 +82,21 @@ export async function submitInquiry(data: InquiryData) {
     const origin = `${protocol}://${host}`;
     const trackingUrl = `${origin}/track/${inquiryCode}`;
 
-    // Generate prefilled WhatsApp message
-    const formattedMessage = `Hello Krishna Transport & Travel Management, I would like to book a service.
+    // Generate prefilled WhatsApp message in Hindi/Hinglish
+    const formattedMessage = `नमस्ते कृष्णा ट्रांसपोर्ट एंड ट्रेवल्स, मैं एक बुकिंग करना चाहता हूँ।
 
-*Booking ID:* ${inquiryCode}
-*Name:* ${data.fullName}
-*Phone:* ${data.phoneNumber}
-*Pickup Location:* ${data.pickupLocation}
-*Drop Location:* ${data.dropLocation}
-*Date:* ${data.bookingDate}
-*Time:* ${data.bookingTime}
-*Goods Type:* ${data.goodsType}
-${data.weight ? `*Estimated Weight:* ${data.weight}\n` : ""}${data.notes ? `*Additional Notes:* ${data.notes}\n` : ""}
-*Track My Booking Here:* ${trackingUrl}
+*बुकिंग आईडी (Booking ID):* ${inquiryCode}
+*नाम (Name):* ${data.fullName}
+*मोबाइल नंबर (Phone):* ${data.phoneNumber}
+*कहाँ से सामान उठाना है (Pickup):* ${data.pickupLocation}
+*कहाँ पहुँचाना है (Drop):* ${data.dropLocation}
+*तारीख (Date):* ${data.bookingDate}
+*समय (Time):* ${data.bookingTime}
+*सर्विस का प्रकार (Service):* ${data.goodsType}
+${data.weight ? `*अनुमानित वजन (Weight):* ${data.weight}\n` : ""}${data.notes ? `*सामान की लिस्ट / नोट (Notes):* ${data.notes}\n` : ""}
+*बुकिंग ट्रैक करें (Track Link):* ${trackingUrl}
 
-Please contact me for final pricing.`;
+कृपया किराया तय करने के लिए मुझसे संपर्क करें।`;
 
     const encodedText = encodeURIComponent(formattedMessage);
     const whatsappUrl = `https://wa.me/917071634535?text=${encodedText}`;

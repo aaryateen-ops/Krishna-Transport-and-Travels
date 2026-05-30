@@ -22,9 +22,10 @@ import { supabase } from "@/lib/supabase";
 
 interface InquiryFormProps {
   initialService?: string;
+  lang?: "hi" | "en";
 }
 
-export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
+export default function InquiryForm({ initialService = "", lang = "hi" }: InquiryFormProps) {
   const [formData, setFormData] = useState<InquiryData>({
     fullName: "",
     phoneNumber: "",
@@ -140,9 +141,104 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
       }, 1000);
       redirectTimerRef.current = timer;
     } else {
-      setStatus({ error: result.error || "Submission failed. Please try again." });
+      setStatus({ error: result.error || (lang === "hi" ? "बुकिंग दर्ज करने में समस्या आई। कृपया फिर से कोशिश करें।" : "Submission failed. Please try again.") });
       setLoading(false);
     }
+  };
+
+  const labels = {
+    hi: {
+      title: "गाड़ी का किराया जानें",
+      linked: "बुकिंग आपके खाते से लिंक है",
+      subtitle: "नीचे अपनी डिटेल्स भरें। फॉर्म भेजने के बाद रोहित भैया आपसे सीधे व्हाट्सएप या कॉल पर किराया तय कर लेंगे।",
+      submitting: "बुकिंग दर्ज हो रही है...",
+      submitBtn: "बुकिंग करें और व्हाट्सएप पर किराया जानें",
+      minBooking: "किराया कम से कम ₹600 से शुरू",
+      coverage: "वाराणसी और आस-पास के 10+ जिलों में सर्विस",
+      successTitle: "बुकिंग रिक्वेस्ट दर्ज हो गई है!",
+      successDesc: "आपकी जानकारी हमारे पास सुरक्षित दर्ज हो गई है।",
+      bookingId: "बुकिंग आईडी (ID)",
+      service: "सर्विस",
+      phone: "फ़ोन",
+      route: "रूट (कहाँ से कहाँ)",
+      redirecting: "किराया तय करने के लिए आपको सीधे रोहित भैया के व्हाट्सएप पर ले जा रहे हैं...",
+      whatsappIn: "व्हाट्सएप {seconds} सेकंड में...",
+      trackDirectly: "या सीधे ट्रैकिंग स्टेटस शीट देखें →",
+      whatsappFail: "अगर व्हाट्सएप अपने आप नहीं खुलता है, तो हमें 7080360217 पर फोन करें।",
+      custDetails: "👤 ग्राहक की जानकारी (Customer Details)",
+      fullName: "आपका पूरा नाम *",
+      fullNamePlaceholder: "अपना नाम दर्ज करें",
+      phoneLabel: "व्हाट्सएप मोबाइल नंबर *",
+      phonePlaceholder: "10 अंकों का मोबाइल नंबर",
+      routeDetails: "📍 कहाँ से कहाँ जाना है (Route)",
+      pickupLabel: "सामान कहाँ से उठाना है (पिकअप) *",
+      pickupPlaceholder: "जैसे: सिगरा, Varanasi",
+      dropLabel: "सामान कहाँ पहुँचाना है (ड्रॉप) *",
+      dropPlaceholder: "जैसे: सालरपुर, Varanasi या आज़मगढ़",
+      cargoDetails: "📦 गाड़ी और सामान की जानकारी",
+      serviceType: "कैसी गाड़ी/सर्विस चाहिए *",
+      servicePlaceholder: "सर्विस का प्रकार चुनें",
+      weightLabel: "लगभग कितना वजन है? (ऑप्शनल)",
+      weightPlaceholder: "जैसे: 500kg, 1 टन",
+      dateLabel: "बुकिंग की तारीख *",
+      timeLabel: "सामान भेजने का समय *",
+      notesLabel: "सामान की लिस्ट या कोई जरूरी बात (ऑप्शनल)",
+      notesPlaceholder: "सामान की लिस्ट लिखें (जैसे: बेड, फ्रिज, 10 कार्टन) या लोडिंग की जानकारी...",
+      voiceNoteTip: "💡 सलाह: व्हाट्सएप खुलने पर आप रोहित भैया को बोलकर (वॉइस नोट भेजकर) भी किराया फाइनल कर सकते हैं।",
+    },
+    en: {
+      title: "Get Instant Free Quote",
+      linked: "Booking linked to your account",
+      subtitle: "Fill in details. Rohit will coordinate best rates manually on WhatsApp!",
+      submitting: "Submitting Inquiry...",
+      submitBtn: "Book & Get Price On WhatsApp",
+      minBooking: "Min. booking from ₹600",
+      coverage: "Varanasi & 10+ Districts",
+      successTitle: "Inquiry Registered!",
+      successDesc: "Your request has been saved in our booking log.",
+      bookingId: "Booking ID",
+      service: "Service",
+      phone: "Phone",
+      route: "Route",
+      redirecting: "Redirecting to WhatsApp to coordinate pricing with Rohit Kumar Singh...",
+      whatsappIn: "WhatsApp in {seconds}s...",
+      trackDirectly: "Or, view live tracking status sheet directly →",
+      whatsappFail: "If WhatsApp does not open automatically, contact us at 7080360217.",
+      custDetails: "👤 Customer Details",
+      fullName: "Full Name *",
+      fullNamePlaceholder: "Enter your name",
+      phoneLabel: "WhatsApp Phone Number *",
+      phonePlaceholder: "10 digit mobile number",
+      routeDetails: "📍 Route details",
+      pickupLabel: "Pickup Location *",
+      pickupPlaceholder: "e.g., Sigra, Varanasi",
+      dropLabel: "Drop Location *",
+      dropPlaceholder: "e.g., Salarpur, Varanasi or Azamgarh",
+      cargoDetails: "📦 Schedule & Cargo Details",
+      serviceType: "Type of Service *",
+      servicePlaceholder: "Select service type",
+      weightLabel: "Estimated Weight (Optional)",
+      weightPlaceholder: "e.g., 500kg, 1 Ton",
+      dateLabel: "Booking Date *",
+      timeLabel: "Preferred Transit Time *",
+      notesLabel: "Special Instructions / Goods List (Optional)",
+      notesPlaceholder: "List items to shift (e.g. Bed, Fridge, 10 Cartons) or loading details...",
+      voiceNoteTip: "💡 Tip: Once WhatsApp opens, you can also send a voice note to negotiate prices.",
+    }
+  };
+
+  const t = lang === "hi" ? labels.hi : labels.en;
+
+  const servicesMap: { [key: string]: { hi: string; en: string } } = {
+    "Pickup Service": { hi: "पिकअप सर्विस (लोकल भाड़ा)", en: "Pickup Service" },
+    "Goods Transport": { hi: "व्यापारिक माल ट्रांसपोर्ट", en: "Goods Transport" },
+    "Household Shifting": { hi: "घर का सामान बदलना (Shifting)", en: "Household Shifting" },
+    "Furniture Shifting": { hi: "फर्नीचर शिफ्टिंग", en: "Furniture Shifting" },
+    "Parcel Delivery": { hi: "पार्सल डिलीवरी (बल्क सामान)", en: "Parcel Delivery" },
+    "Local Transport": { hi: "लोकल ट्रांसपोर्ट (वाराणसी)", en: "Local Transport" },
+    "Intercity Transport": { hi: "बाहर जिलों के लिए ट्रांसपोर्ट", en: "Intercity Transport" },
+    "Tempo Booking": { hi: "टेम्पो बुकिंग", en: "Tempo Booking" },
+    "Sabji Mandi Logistics": { hi: "सब्जी मंडी माल सप्लाई", en: "Sabji Mandi Logistics" },
   };
 
   if (status.success) {
@@ -151,8 +247,8 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
         <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4 text-emerald-600 animate-bounce">
           <CheckCircle className="w-10 h-10" />
         </div>
-        <h3 className="text-2xl font-bold text-slate-800 mb-1">Inquiry Registered!</h3>
-        <p className="text-sm text-slate-500 mb-6">Your request has been saved in our booking log.</p>
+        <h3 className="text-2xl font-bold text-slate-800 mb-1">{t.successTitle}</h3>
+        <p className="text-sm text-slate-500 mb-6">{t.successDesc}</p>
         
         {/* Booking Slip Card */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 w-full max-w-sm mb-6 text-left flex flex-col gap-2 relative overflow-hidden">
@@ -160,51 +256,62 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
             LOG
           </div>
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-400">Booking ID</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400">{t.bookingId}</span>
             <span className="block font-mono font-extrabold text-lg text-primary-800">{inquiryCode}</span>
           </div>
           <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-2 text-xs">
             <div>
-              <span className="block font-semibold text-slate-400 text-[10px] uppercase">Service</span>
-              <span className="font-bold text-slate-700">{formData.goodsType}</span>
+              <span className="block font-semibold text-slate-400 text-[10px] uppercase">{t.service}</span>
+              <span className="font-bold text-slate-700">
+                {servicesMap[formData.goodsType] ? servicesMap[formData.goodsType][lang] : formData.goodsType}
+              </span>
             </div>
             <div>
-              <span className="block font-semibold text-slate-400 text-[10px] uppercase">Phone</span>
+              <span className="block font-semibold text-slate-400 text-[10px] uppercase">{t.phone}</span>
               <span className="font-bold text-slate-700">{formData.phoneNumber}</span>
             </div>
           </div>
           <div className="text-xs border-t border-slate-200 pt-2">
-            <span className="block font-semibold text-slate-400 text-[10px] uppercase">Route</span>
+            <span className="block font-semibold text-slate-400 text-[10px] uppercase">{t.route}</span>
             <span className="font-bold text-slate-700">{formData.pickupLocation} &rarr; {formData.dropLocation}</span>
           </div>
         </div>
 
-        <p className="text-slate-600 text-sm mb-6 max-w-xs leading-relaxed">
-          Redirecting to WhatsApp to coordinate pricing with Rohit Kumar Singh...
+        <p className="text-slate-600 text-sm mb-4 max-w-xs leading-relaxed">
+          {t.redirecting}
+        </p>
+
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-6 max-w-xs font-semibold leading-relaxed">
+          {t.voiceNoteTip}
         </p>
 
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <div className="inline-flex items-center justify-center gap-3 px-6 py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold rounded-xl shadow-lg transition-all duration-300 border-none">
             <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            WhatsApp in {redirectCount}s...
+            {t.whatsappIn.replace("{seconds}", String(redirectCount))}
           </div>
           
           <a 
             href={`/track/${inquiryCode}`}
             className="text-xs text-primary-800 font-bold hover:underline"
           >
-            Or, view live tracking status sheet directly &rarr;
+            {t.trackDirectly}
           </a>
         </div>
 
         <p className="text-[10px] text-slate-400 mt-6">
-          If WhatsApp does not open automatically, contact us at 7080360217.
+          {t.whatsappFail}
         </p>
       </div>
     );
   }
 
-  const timeOptions = [
+  const timeOptions = lang === "hi" ? [
+    { value: "Morning (6 AM - 12 PM)", label: "सुबह (Morning)", sub: "6 AM - 12 PM", emoji: "🌅" },
+    { value: "Afternoon (12 PM - 5 PM)", label: "दोपहर (Afternoon)", sub: "12 PM - 5 PM", emoji: "☀️" },
+    { value: "Evening (5 PM - 9 PM)", label: "शाम (Evening)", sub: "5 PM - 9 PM", emoji: "🌇" },
+    { value: "Night (9 PM - 6 AM)", label: "रात (Night)", sub: "9 PM - 6 AM", emoji: "🌙" },
+  ] : [
     { value: "Morning (6 AM - 12 PM)", label: "Morning", sub: "6 AM - 12 PM", emoji: "🌅" },
     { value: "Afternoon (12 PM - 5 PM)", label: "Afternoon", sub: "12 PM - 5 PM", emoji: "☀️" },
     { value: "Evening (5 PM - 9 PM)", label: "Evening", sub: "5 PM - 9 PM", emoji: "🌇" },
@@ -217,13 +324,13 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
       <div className="absolute top-0 left-0 right-0 h-[4px] bg-gradient-to-r from-primary-800 to-accent-500"></div>
 
       <div>
-        <h3 className="text-2xl font-display font-extrabold text-primary-800 mb-1">Get Instant Free Quote</h3>
+        <h3 className="text-2xl font-display font-extrabold text-primary-800 mb-1">{t.title}</h3>
         {formData.email ? (
           <p className="text-xs text-green-700 bg-green-50/50 border border-green-150 rounded-xl px-3 py-1.5 inline-flex items-center gap-1.5 mt-1 font-bold">
-            <CheckCircle className="w-3.5 h-3.5 text-green-500 animate-pulse" /> Booking linked to your account ({formData.email})
+            <CheckCircle className="w-3.5 h-3.5 text-green-500 animate-pulse" /> {t.linked} ({formData.email})
           </p>
         ) : (
-          <p className="text-xs sm:text-sm text-slate-500">Fill in details. Rohit will coordinate best rates manually on WhatsApp!</p>
+          <p className="text-xs sm:text-sm text-slate-500">{t.subtitle}</p>
         )}
       </div>
 
@@ -235,10 +342,10 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
 
       {/* Group 1: Customer Details */}
       <div className="flex flex-col gap-4">
-        <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">👤 Customer Details</span>
+        <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">{t.custDetails}</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="fullName" className="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
+            <label htmlFor="fullName" className="block text-xs font-bold text-slate-700 mb-1">{t.fullName}</label>
             <div className="relative">
               <input
                 type="text"
@@ -247,7 +354,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
                 value={formData.fullName}
                 onChange={handleChange}
                 required
-                placeholder="Enter your name"
+                placeholder={t.fullNamePlaceholder}
                 className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent text-sm bg-slate-50/40 text-slate-800 font-medium placeholder-slate-400 transition-all"
               />
               <User className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
@@ -255,7 +362,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
           </div>
 
           <div>
-            <label htmlFor="phoneNumber" className="block text-xs font-bold text-slate-700 mb-1">WhatsApp Phone Number *</label>
+            <label htmlFor="phoneNumber" className="block text-xs font-bold text-slate-700 mb-1">{t.phoneLabel}</label>
             <div className="relative">
               <input
                 type="tel"
@@ -265,7 +372,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
                 onChange={handleChange}
                 required
                 pattern="[0-9]{10}"
-                placeholder="10 digit mobile number"
+                placeholder={t.phonePlaceholder}
                 className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent text-sm bg-slate-50/40 text-slate-800 font-medium placeholder-slate-400 transition-all"
               />
               <Phone className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
@@ -276,10 +383,10 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
 
       {/* Group 2: Route Details */}
       <div className="flex flex-col gap-4">
-        <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">📍 Route details</span>
+        <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">{t.routeDetails}</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="pickupLocation" className="block text-xs font-bold text-slate-700 mb-1">Pickup Location *</label>
+            <label htmlFor="pickupLocation" className="block text-xs font-bold text-slate-700 mb-1">{t.pickupLabel}</label>
             <div className="relative">
               <input
                 type="text"
@@ -288,7 +395,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
                 value={formData.pickupLocation}
                 onChange={handleChange}
                 required
-                placeholder="e.g., Sigra, Varanasi"
+                placeholder={t.pickupPlaceholder}
                 className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent text-sm bg-slate-50/40 text-slate-800 font-medium placeholder-slate-400 transition-all"
               />
               <MapPin className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
@@ -296,7 +403,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
           </div>
 
           <div>
-            <label htmlFor="dropLocation" className="block text-xs font-bold text-slate-700 mb-1">Drop Location *</label>
+            <label htmlFor="dropLocation" className="block text-xs font-bold text-slate-700 mb-1">{t.dropLabel}</label>
             <div className="relative">
               <input
                 type="text"
@@ -305,7 +412,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
                 value={formData.dropLocation}
                 onChange={handleChange}
                 required
-                placeholder="e.g., Salarpur, Varanasi or Azamgarh"
+                placeholder={t.dropPlaceholder}
                 className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent text-sm bg-slate-50/40 text-slate-800 font-medium placeholder-slate-400 transition-all"
               />
               <Navigation className="w-4 h-4 text-slate-400 absolute left-4 top-3.5 rotate-45" />
@@ -316,10 +423,10 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
 
       {/* Group 3: Schedule & Cargo Details */}
       <div className="flex flex-col gap-4">
-        <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">📦 Schedule & Cargo Details</span>
+        <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">{t.cargoDetails}</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="goodsType" className="block text-xs font-bold text-slate-700 mb-1">Type of Service *</label>
+            <label htmlFor="goodsType" className="block text-xs font-bold text-slate-700 mb-1">{t.serviceType}</label>
             <div className="relative">
               <select
                 id="goodsType"
@@ -329,16 +436,12 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
                 required
                 className="w-full pl-11 pr-10 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent text-sm bg-slate-50/40 text-slate-800 font-medium appearance-none transition-all cursor-pointer"
               >
-                <option value="" disabled>Select service type</option>
-                <option value="Pickup Service">Pickup Service</option>
-                <option value="Goods Transport">Goods Transport</option>
-                <option value="Household Shifting">Household Shifting</option>
-                <option value="Furniture Shifting">Furniture Shifting</option>
-                <option value="Parcel Delivery">Parcel Delivery</option>
-                <option value="Local Transport">Local Transport</option>
-                <option value="Intercity Transport">Intercity Transport</option>
-                <option value="Tempo Booking">Tempo Booking</option>
-                <option value="Sabji Mandi Logistics">Sabji Mandi Logistics</option>
+                <option value="" disabled>{t.servicePlaceholder}</option>
+                {Object.keys(servicesMap).map((srvKey) => (
+                  <option key={srvKey} value={srvKey}>
+                    {servicesMap[srvKey][lang]}
+                  </option>
+                ))}
               </select>
               <Package className="w-4 h-4 text-slate-400 absolute left-4 top-3.5 pointer-events-none" />
               <ChevronDown className="w-4 h-4 text-slate-400 absolute right-4 top-3.5 pointer-events-none" />
@@ -346,7 +449,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
           </div>
 
           <div>
-            <label htmlFor="weight" className="block text-xs font-bold text-slate-700 mb-1">Estimated Weight (Optional)</label>
+            <label htmlFor="weight" className="block text-xs font-bold text-slate-700 mb-1">{t.weightLabel}</label>
             <div className="relative">
               <input
                 type="text"
@@ -354,7 +457,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
                 name="weight"
                 value={formData.weight}
                 onChange={handleChange}
-                placeholder="e.g., 500kg, 1 Ton"
+                placeholder={t.weightPlaceholder}
                 className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent text-sm bg-slate-50/40 text-slate-800 font-medium placeholder-slate-400 transition-all"
               />
               <Scale className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
@@ -364,7 +467,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
 
         {/* Date Selector */}
         <div>
-          <label htmlFor="bookingDate" className="block text-xs font-bold text-slate-700 mb-1">Booking Date *</label>
+          <label htmlFor="bookingDate" className="block text-xs font-bold text-slate-700 mb-1">{t.dateLabel}</label>
           <div className="relative">
             <input
               type="date"
@@ -382,7 +485,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
 
         {/* Preferred Time Grid Selector */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-2">Preferred Transit Time *</label>
+          <label className="block text-xs font-bold text-slate-700 mb-2">{t.timeLabel}</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {timeOptions.map((opt) => {
               const isSelected = formData.bookingTime === opt.value;
@@ -409,7 +512,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
 
       {/* Group 4: Special Instructions */}
       <div>
-        <label htmlFor="notes" className="block text-xs font-bold text-slate-700 mb-1">Special Instructions / Goods List (Optional)</label>
+        <label htmlFor="notes" className="block text-xs font-bold text-slate-700 mb-1">{t.notesLabel}</label>
         <div className="relative">
           <textarea
             id="notes"
@@ -417,7 +520,7 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
             value={formData.notes}
             onChange={handleChange}
             rows={3}
-            placeholder="List items to shift (e.g. Bed, Fridge, 10 Cartons) or loading details..."
+            placeholder={t.notesPlaceholder}
             className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent text-sm bg-slate-50/40 text-slate-800 font-medium placeholder-slate-400 transition-all"
           />
           <FileText className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
@@ -433,21 +536,21 @@ export default function InquiryForm({ initialService = "" }: InquiryFormProps) {
         {loading ? (
           <>
             <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            Submitting Inquiry...
+            {t.submitting}
           </>
         ) : (
           <>
             <WhatsAppIcon className="w-5 h-5" />
-            Book &amp; Get Price On WhatsApp
+            {t.submitBtn}
           </>
         )}
       </button>
 
       {/* Footer Notice */}
       <div className="flex items-center justify-center gap-3 text-xs font-semibold text-slate-500 border-t border-slate-100 pt-4 mt-1">
-        <span>Min. booking from ₹600</span>
+        <span>{t.minBooking}</span>
         <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
-        <span>Varanasi &amp; 10+ Districts</span>
+        <span>{t.coverage}</span>
       </div>
     </form>
   );

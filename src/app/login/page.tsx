@@ -18,9 +18,11 @@ import {
   Loader2,
   Truck
 } from "lucide-react";
+import { useLanguage } from "@/lib/useLanguage";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [lang, setLang] = useLanguage();
   
   // Tabs: 'signin' or 'signup'
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
@@ -37,6 +39,67 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
+
+  const t = {
+    hi: {
+      backHome: "मुख्य पेज पर जाएँ",
+      welcomeBack: "आपका स्वागत है!",
+      createAccount: "कस्टमर अकाउंट बनाएं",
+      signinSub: "अपनी बुकिंग देखने या एडमिन डैशबोर्ड के लिए लॉगिन करें।",
+      signupSub: "बुकिंग देखने, ट्रैक करने और हिस्ट्री देखने के लिए अकाउंट बनाएं।",
+      signinTab: "लॉगिन करें (Sign In)",
+      signupTab: "अकाउंट बनाएं (Sign Up)",
+      fullNameLabel: "आपका पूरा नाम *",
+      fullNamePlaceholder: "जैसे: रमेश कुमार",
+      phoneLabel: "व्हाट्सएप मोबाइल नंबर *",
+      phonePlaceholder: "जैसे: 9876543210",
+      emailLabel: "ईमेल पता (Email) *",
+      emailPlaceholder: "जैसे: you@example.com",
+      passwordLabel: "पासवर्ड (Password) *",
+      passwordPlaceholder: "••••••••",
+      submitSignin: "लॉगिन करें (Sign In)",
+      submitSignup: "अकाउंट बनाएं (Sign Up)",
+      processing: "प्रोसेस हो रहा है...",
+      sessionChecking: "ऑथ सेशन चेक हो रहा है...",
+      errorFields: "कृपया सभी फ़ील्ड्स भरें।",
+      errorEmailPass: "कृपया ईमेल और पासवर्ड दोनों डालें।",
+      errorPasswordLength: "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।",
+      successLogin: "लॉगिन सफल! आगे बढ़ रहे हैं...",
+      successSignupLogged: "अकाउंट बन गया और लॉगिन सफल! आगे बढ़ रहे हैं...",
+      successSignupConfirm: "अकाउंट बन गया! कृपया वेरिफिकेशन लिंक के लिए अपना ईमेल चेक करें, या लॉगिन करने का प्रयास करें।",
+      unexpectedErrorSignin: "लॉगिन के दौरान कोई तकनीकी समस्या आई।",
+      unexpectedErrorSignup: "अकाउंट बनाने के दौरान कोई तकनीकी समस्या आई।"
+    },
+    en: {
+      backHome: "Back to Home",
+      welcomeBack: "Welcome Back!",
+      createAccount: "Create Customer Account",
+      signinSub: "Sign in to access your inquiries or admin dashboard.",
+      signupSub: "Register to manage bookings, track trips, and view history.",
+      signinTab: "Sign In",
+      signupTab: "Sign Up",
+      fullNameLabel: "Full Name *",
+      fullNamePlaceholder: "e.g. Ramesh Kumar",
+      phoneLabel: "WhatsApp Phone Number *",
+      phonePlaceholder: "e.g. 9876543210",
+      emailLabel: "Email Address *",
+      emailPlaceholder: "e.g. you@example.com",
+      passwordLabel: "Password *",
+      passwordPlaceholder: "••••••••",
+      submitSignin: "Sign In",
+      submitSignup: "Create Account",
+      processing: "Processing...",
+      sessionChecking: "Checking auth session...",
+      errorFields: "Please fill all the fields.",
+      errorEmailPass: "Please enter both email and password.",
+      errorPasswordLength: "Password must be at least 6 characters long.",
+      successLogin: "Logged in successfully! Redirecting...",
+      successSignupLogged: "Account created and logged in successfully! Redirecting...",
+      successSignupConfirm: "Registration successful! Please check your email for a verification link, or try signing in.",
+      unexpectedErrorSignin: "An unexpected error occurred during sign in.",
+      unexpectedErrorSignup: "An unexpected error occurred during registration."
+    }
+  }[lang];
 
   // Check if already logged in on mount
   useEffect(() => {
@@ -63,7 +126,7 @@ export default function LoginPage() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorMsg("Please enter both email and password.");
+      setErrorMsg(t.errorEmailPass);
       return;
     }
 
@@ -84,7 +147,7 @@ export default function LoginPage() {
       }
 
       if (data?.user) {
-        setSuccessMsg("Logged in successfully! Redirecting...");
+        setSuccessMsg(t.successLogin);
         const userEmail = data.user.email;
         
         // Save admin password to legacy storage if admin logs in, to keep admin actions working
@@ -105,7 +168,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error("Sign in error:", err);
-      setErrorMsg("An unexpected error occurred during sign in.");
+      setErrorMsg(t.unexpectedErrorSignin);
       setLoading(false);
     }
   };
@@ -113,12 +176,12 @@ export default function LoginPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || !fullName || !phoneNumber) {
-      setErrorMsg("Please fill all the fields.");
+      setErrorMsg(t.errorFields);
       return;
     }
 
     if (password.length < 6) {
-      setErrorMsg("Password must be at least 6 characters long.");
+      setErrorMsg(t.errorPasswordLength);
       return;
     }
 
@@ -145,23 +208,20 @@ export default function LoginPage() {
       }
 
       if (data?.user) {
-        // Check if email confirmation is required by Supabase setup
-        // Normally, if identities is empty and user exists, email might need confirmation,
-        // but if they are signed in immediately, or can log in:
         if (data.session) {
-          setSuccessMsg("Account created and logged in successfully! Redirecting...");
+          setSuccessMsg(t.successSignupLogged);
           setTimeout(() => {
             router.push("/dashboard");
           }, 1500);
         } else {
-          setSuccessMsg("Registration successful! Please check your email for a verification link, or try signing in.");
+          setSuccessMsg(t.successSignupConfirm);
           setLoading(false);
           setActiveTab("signin");
         }
       }
     } catch (err: any) {
       console.error("Sign up error:", err);
-      setErrorMsg("An unexpected error occurred during registration.");
+      setErrorMsg(t.unexpectedErrorSignup);
       setLoading(false);
     }
   };
@@ -170,7 +230,7 @@ export default function LoginPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
         <Loader2 className="w-10 h-10 text-primary-600 animate-spin" />
-        <p className="mt-4 text-sm font-semibold text-slate-500">Checking auth session...</p>
+        <p className="mt-4 text-sm font-semibold text-slate-500">{t.sessionChecking}</p>
       </div>
     );
   }
@@ -197,13 +257,22 @@ export default function LoginPage() {
             Krishna Transport
           </span>
         </Link>
-        <Link 
-          href="/" 
-          className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary-800 transition-colors"
-        >
-          <ArrowLeft className="w-4.5 h-4.5" />
-          Back to Home
-        </Link>
+        <div className="flex items-center gap-3">
+          {/* Language Switcher */}
+          <button
+            onClick={() => setLang(lang === "hi" ? "en" : "hi")}
+            className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+          >
+            🌐 {lang === "hi" ? "English" : "हिन्दी"}
+          </button>
+          <Link 
+            href="/" 
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary-800 transition-colors"
+          >
+            <ArrowLeft className="w-4.5 h-4.5" />
+            {t.backHome}
+          </Link>
+        </div>
       </header>
 
       {/* Form Container */}
@@ -214,12 +283,10 @@ export default function LoginPage() {
               <Truck className="w-6 h-6" />
             </div>
             <h1 className="font-display font-extrabold text-2xl text-primary-800">
-              {activeTab === "signin" ? "Welcome Back!" : "Create Customer Account"}
+              {activeTab === "signin" ? t.welcomeBack : t.createAccount}
             </h1>
             <p className="text-slate-500 text-xs sm:text-sm mt-1.5">
-              {activeTab === "signin" 
-                ? "Sign in to access your inquiries or admin dashboard." 
-                : "Register to manage bookings, track trips, and view history."}
+              {activeTab === "signin" ? t.signinSub : t.signupSub}
             </p>
           </div>
 
@@ -246,13 +313,13 @@ export default function LoginPage() {
                 setErrorMsg("");
                 setSuccessMsg("");
               }}
-              className={`py-2 text-xs font-bold rounded-xl transition-all ${
+              className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                 activeTab === "signin" 
                   ? "bg-white text-primary-800 shadow-sm" 
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              Sign In
+              {t.signinTab}
             </button>
             <button
               onClick={() => {
@@ -260,13 +327,13 @@ export default function LoginPage() {
                 setErrorMsg("");
                 setSuccessMsg("");
               }}
-              className={`py-2 text-xs font-bold rounded-xl transition-all ${
+              className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                 activeTab === "signup" 
                   ? "bg-white text-primary-800 shadow-sm" 
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              Sign Up
+              {t.signupTab}
             </button>
           </div>
 
@@ -278,7 +345,7 @@ export default function LoginPage() {
                 {/* Full Name */}
                 <div>
                   <label htmlFor="fullName" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Full Name
+                    {t.fullNameLabel}
                   </label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -288,7 +355,7 @@ export default function LoginPage() {
                       id="fullName"
                       type="text"
                       required
-                      placeholder="e.g. Ramesh Kumar"
+                      placeholder={t.fullNamePlaceholder}
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none rounded-xl text-sm font-semibold transition-all"
@@ -299,7 +366,7 @@ export default function LoginPage() {
                 {/* WhatsApp Phone Number */}
                 <div>
                   <label htmlFor="phoneNumber" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    WhatsApp Phone Number
+                    {t.phoneLabel}
                   </label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -309,7 +376,7 @@ export default function LoginPage() {
                       id="phoneNumber"
                       type="tel"
                       required
-                      placeholder="e.g. 9876543210"
+                      placeholder={t.phonePlaceholder}
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none rounded-xl text-sm font-semibold transition-all"
@@ -322,7 +389,7 @@ export default function LoginPage() {
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Email Address
+                {t.emailLabel}
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -332,7 +399,7 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   required
-                  placeholder="e.g. you@example.com"
+                  placeholder={t.emailPlaceholder}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none rounded-xl text-sm font-semibold transition-all"
@@ -344,7 +411,7 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="password" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Password
+                  {t.passwordLabel}
                 </label>
               </div>
               <div className="relative">
@@ -355,7 +422,7 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  placeholder="••••••••"
+                  placeholder={t.passwordPlaceholder}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-10 py-2.5 bg-slate-50/50 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none rounded-xl text-sm font-semibold transition-all"
@@ -374,17 +441,17 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary-800 hover:bg-primary-900 text-white font-bold text-sm rounded-xl shadow-md shadow-primary-800/10 hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-6 cursor-pointer hover:scale-[1.01]"
+              className="w-full py-3 bg-primary-800 hover:bg-primary-900 text-white font-bold text-sm rounded-xl shadow-md shadow-primary-800/10 hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-6 cursor-pointer hover:scale-[1.01] border-none"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Processing...
+                  {t.processing}
                 </>
               ) : activeTab === "signin" ? (
-                "Sign In"
+                t.submitSignin
               ) : (
-                "Create Account"
+                t.submitSignup
               )}
             </button>
           </form>

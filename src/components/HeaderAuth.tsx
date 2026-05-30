@@ -5,7 +5,11 @@ import Link from "next/link";
 import { User, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-export default function HeaderAuth() {
+interface HeaderAuthProps {
+  lang?: "hi" | "en";
+}
+
+export default function HeaderAuth({ lang = "hi" }: HeaderAuthProps) {
   const [sessionChecked, setSessionChecked] = useState(false);
   const [dashboardUrl, setDashboardUrl] = useState<string | null>(null);
 
@@ -63,10 +67,10 @@ export default function HeaderAuth() {
       <Link 
         href={dashboardUrl}
         className="flex items-center justify-center w-9 h-9 sm:w-auto sm:px-4 sm:py-2 text-primary-800 hover:text-white bg-primary-50 hover:bg-primary-800 border border-primary-100 rounded-xl text-xs font-extrabold transition-all shrink-0 hover:scale-[1.02]"
-        title="Go to Dashboard"
+        title={lang === "hi" ? "डैशबोर्ड पर जाएँ" : "Go to Dashboard"}
       >
         <User className="w-4 h-4" />
-        <span className="hidden sm:inline ml-1.5">My Dashboard</span>
+        <span className="hidden sm:inline ml-1.5">{lang === "hi" ? "मेरा डैशबोर्ड" : "My Dashboard"}</span>
       </Link>
     );
   }
@@ -75,10 +79,10 @@ export default function HeaderAuth() {
     <Link 
       href="/login"
       className="flex items-center justify-center w-9 h-9 sm:w-auto sm:px-4 sm:py-2 text-slate-650 hover:text-primary-800 hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold transition-all shrink-0 hover:scale-[1.02]"
-      title="Login to Account"
+      title={lang === "hi" ? "खाते में लॉगिन करें" : "Login to Account"}
     >
       <User className="w-4 h-4 text-slate-400" />
-      <span className="hidden sm:inline ml-1.5">Customer Login</span>
+      <span className="hidden sm:inline ml-1.5">{lang === "hi" ? "कस्टमर लॉगिन" : "Customer Login"}</span>
     </Link>
   );
 }

@@ -21,12 +21,14 @@ import {
   XCircle,
   AlertTriangle
 } from "lucide-react";
+import { useLanguage } from "@/lib/useLanguage";
 
 export default function TrackingDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const code = typeof params.code === "string" ? params.code : "";
 
+  const [lang, setLang] = useLanguage();
   const [inquiry, setInquiry] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,16 +40,149 @@ export default function TrackingDetailsPage() {
   const [cancelError, setCancelError] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
 
+  const t = {
+    hi: {
+      loadingText: "बुकिंग की स्थिति लोड हो रही है...",
+      notFoundTitle: "बुकिंग कोड नहीं मिला",
+      notFoundDesc: "हमें कोड {code} के तहत कोई बुकिंग नहीं मिली। कृपया कोड चेक करें और फिर से कोशिश करें।",
+      backSearch: "सर्च पेज पर वापस जाएँ",
+      printSlip: "पर्ची प्रिंट करें",
+      exit: "बाहर निकलें",
+      liveTracker: "लाइव स्टेटस ट्रैकर",
+      bookingId: "बुकिंग आईडी (ID):",
+      autoRefresh: "अपडेट हो रहा है (ऑटो रिफ्रेश)",
+      cancelledTitle: "बुकिंग रद्द हो गई है",
+      cancelledDesc: "यह बुकिंग रद्द कर दी गई है। सहायता के लिए कस्टमर सपोर्ट से संपर्क करें।",
+      submitted: "बुकिंग दर्ज",
+      quoted: "किराया तय",
+      confirmed: "गाड़ी तय",
+      completedStep: "सामान पहुँचा",
+      receiptTitle: "बुकिंग रसीद (Booking Receipt)",
+      pickupLabel: "सामान कहाँ से उठाना है (Pickup)",
+      dropLabel: "सामान कहाँ पहुँचाना है (Drop)",
+      custName: "ग्राहक का नाम",
+      phone: "मोबाइल नंबर",
+      date: "बुकिंग की तारीख",
+      time: "पसंदीदा समय",
+      srvType: "सर्विस का प्रकार",
+      weight: "लगभग वजन",
+      notSpecified: "तय नहीं है",
+      notesLabel: "सामान की लिस्ट / जरूरी निर्देश",
+      receiptTermsTitle: "रसीद के नियम व शर्तें (Notes):",
+      termsList: [
+        "• किराया तय दूरी, टोल टैक्स और लेबर के हिसाब से बदल सकता है।",
+        "• गाड़ी अलॉट होने के बाद बुकिंग रद्द करने पर ₹200 चार्ज लगेगा।",
+        "• सामान लोड करने से पहले ड्राइवर के साथ लिस्ट जरूर मिला लें।"
+      ],
+      authSign: "अधिकृत हस्ताक्षर",
+      cancelStatus: "यह बुकिंग रद्द हो चुकी है और अब चालू नहीं है।",
+      pricingTitle: "तय किराया (Amount)",
+      priceConfirmed: "किराया पक्का हो गया है",
+      pricePending: "किराया पेंडिंग है",
+      pricePendingDesc: "रोहित भैया से फोन पर किराया तय करें।",
+      callOwner: "किराया तय करने के लिए कॉल करें",
+      assignedTransit: "गाड़ी और ड्राइवर",
+      driverVehicle: "ड्राइवर की जानकारी",
+      driverName: "ड्राइवर का नाम",
+      vehicleNumber: "गाड़ी का नंबर",
+      callDriver: "ड्राइवर को कॉल करें",
+      driverAwaiting: "ड्राइवर की जानकारी पेंडिंग है",
+      driverAwaitingDesc: "बुकिंग पक्की होने पर रोहित भैया यहाँ ड्राइवर और गाड़ी की जानकारी अपडेट कर देंगे।",
+      cancelBtn: "बुकिंग रद्द करें",
+      modalTitle: "बुकिंग रद्द करें",
+      modalDesc: "कृपया बुकिंग रद्द करने का कारण चुनें। इससे हमें अपनी सर्विस सुधारने में मदद मिलती है।",
+      specifyReason: "कृपया कारण स्पष्ट करें",
+      explainPlaceholder: "अपनी समस्या यहाँ लिखें...",
+      modalBack: "पीछे जाएँ",
+      modalConfirm: "रद्द करना पक्का करें",
+      modalCancelling: "रद्द हो रहा है...",
+      selectReasonError: "कृपया बुकिंग रद्द करने का कारण चुनें।",
+      specifyReasonError: "कृपया खाली स्थान में कारण लिखें।",
+      cancelFailError: "बुकिंग रद्द करने में समस्या आई। फिर से प्रयास करें।"
+    },
+    en: {
+      loadingText: "Retrieving booking status...",
+      notFoundTitle: "Tracking Code Not Found",
+      notFoundDesc: "We couldn't find any inquiries logged under code {code}. Please verify the code and try again.",
+      backSearch: "Back to Search",
+      printSlip: "Print Slip",
+      exit: "Exit",
+      liveTracker: "Live Status Tracker",
+      bookingId: "Booking ID:",
+      autoRefresh: "Auto refreshing (updates live)",
+      cancelledTitle: "Booking Cancelled",
+      cancelledDesc: "This booking has been cancelled. If you need any assistance, please contact customer support.",
+      submitted: "Submitted",
+      quoted: "Price Quoted",
+      confirmed: "Confirmed",
+      completedStep: "Completed",
+      receiptTitle: "Booking Receipt",
+      pickupLabel: "Pickup",
+      dropLabel: "Drop Point",
+      custName: "Customer Name",
+      phone: "Phone Number",
+      date: "Booking Date",
+      time: "Preferred Time",
+      srvType: "Service Type",
+      weight: "Est. Weight",
+      notSpecified: "Not specified",
+      notesLabel: "Goods Description / Instructions",
+      receiptTermsTitle: "Receipt Notes & Terms:",
+      termsList: [
+        "• Pricing is subject to actual distance, road tolls, and labor requested.",
+        "• Minimum cancellation charges of ₹200 apply once driver is dispatched.",
+        "• Please verify your items checklist before loading with the driver."
+      ],
+      authSign: "Authorized Sign",
+      cancelStatus: "This booking is no longer active.",
+      pricingTitle: "Negotiated Amount",
+      priceConfirmed: "Confirmed Rate",
+      pricePending: "₹ Price Pending",
+      pricePendingDesc: "Manual price quote is discussed over call.",
+      callOwner: "Call Owner to Negotiate",
+      assignedTransit: "Assigned Transit",
+      driverVehicle: "Driver & Vehicle",
+      driverName: "Driver Name",
+      vehicleNumber: "Vehicle Number",
+      callDriver: "Call Driver",
+      driverAwaiting: "Driver Details Awaiting",
+      driverAwaitingDesc: "Once your booking is confirmed, Rohit will assign a driver. Driver name and phone will appear here live.",
+      cancelBtn: "Cancel Booking",
+      modalTitle: "Cancel Booking",
+      modalDesc: "Please tell us why you are cancelling your booking. Your feedback helps us improve.",
+      specifyReason: "Specify Reason",
+      explainPlaceholder: "Explain your problem here...",
+      modalBack: "Go Back",
+      modalConfirm: "Confirm Cancel",
+      modalCancelling: "Cancelling...",
+      selectReasonError: "Please select a reason for cancellation.",
+      specifyReasonError: "Please specify your reason in the notes.",
+      cancelFailError: "Failed to cancel booking. Please try again."
+    }
+  }[lang];
+
+  const servicesMap: { [key: string]: { hi: string; en: string } } = {
+    "Pickup Service": { hi: "पिकअप सर्विस (लोकल भाड़ा)", en: "Pickup Service" },
+    "Goods Transport": { hi: "व्यापारिक माल ट्रांसपोर्ट", en: "Goods Transport" },
+    "Household Shifting": { hi: "घर का सामान बदलना (Shifting)", en: "Household Shifting" },
+    "Furniture Shifting": { hi: "फर्नीचर शिफ्टिंग", en: "Furniture Shifting" },
+    "Parcel Delivery": { hi: "पार्सल डिलीवरी (बल्क सामान)", en: "Parcel Delivery" },
+    "Local Transport": { hi: "लोकल ट्रांसपोर्ट (वाराणसी)", en: "Local Transport" },
+    "Intercity Transport": { hi: "बाहर जिलों के लिए ट्रांसपोर्ट", en: "Intercity Transport" },
+    "Tempo Booking": { hi: "टेम्पो बुकिंग", en: "Tempo Booking" },
+    "Sabji Mandi Logistics": { hi: "सब्जी मंडी माल सप्लाई", en: "Sabji Mandi Logistics" },
+  };
+
   const handleCancelBooking = async () => {
     if (!cancelReasonOption) {
-      setCancelError("Please select a reason for cancellation.");
+      setCancelError(t.selectReasonError);
       return;
     }
 
     let finalReason = cancelReasonOption;
     if (cancelReasonOption === "Other Reason / कोई अन्य कारण") {
       if (!otherReasonDetails.trim()) {
-        setCancelError("Please specify your reason in the notes.");
+        setCancelError(t.specifyReasonError);
         return;
       }
       finalReason = `Other: ${otherReasonDetails.trim()}`;
@@ -65,7 +200,7 @@ export default function TrackingDetailsPage() {
       } : null);
       setShowCancelModal(false);
     } else {
-      setCancelError(result.error || "Failed to cancel booking. Please try again.");
+      setCancelError(result.error || t.cancelFailError);
     }
     setCancelLoading(false);
   };
@@ -108,9 +243,7 @@ export default function TrackingDetailsPage() {
 
   const getStepStatusClass = (stepName: string, currentStatus: string) => {
     const statuses = ["pending", "contacted", "completed"];
-    const currentIdx = statuses.indexOf(currentStatus);
     
-    // Map custom step names
     if (stepName === "submitted") {
       return "bg-emerald-600 text-white border-emerald-600";
     }
@@ -140,7 +273,6 @@ export default function TrackingDetailsPage() {
   };
 
   const getStepProgressLineClass = (afterStep: string, currentStatus: string) => {
-    // Determine active line color
     if (afterStep === "submitted") {
       return currentStatus !== "pending" || inquiry.quoted_amount ? "bg-emerald-600" : "bg-slate-200";
     }
@@ -158,7 +290,7 @@ export default function TrackingDetailsPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-sm font-semibold text-slate-600">Retrieving booking status...</span>
+          <span className="text-sm font-semibold text-slate-600">{t.loadingText}</span>
         </div>
       </div>
     );
@@ -174,7 +306,7 @@ export default function TrackingDetailsPage() {
               <span className="font-display font-extrabold text-sm text-primary-800 uppercase">Krishna Transport</span>
             </Link>
             <Link href="/track" className="text-xs font-bold text-slate-500 flex items-center gap-1">
-              <ArrowLeft className="w-4 h-4" /> Tracking Search
+              <ArrowLeft className="w-4 h-4" /> {t.backSearch}
             </Link>
           </div>
         </header>
@@ -184,12 +316,12 @@ export default function TrackingDetailsPage() {
             <div className="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center border border-red-100">
               <Package className="w-6 h-6" />
             </div>
-            <h1 className="font-display font-extrabold text-xl text-primary-800">Tracking Code Not Found</h1>
+            <h1 className="font-display font-extrabold text-xl text-primary-800">{t.notFoundTitle}</h1>
             <p className="text-sm text-slate-500 leading-relaxed">
-              We couldn't find any inquiries logged under code <span className="font-mono font-bold text-red-600">{code}</span>. Please verify the code and try again.
+              {t.notFoundDesc.replace("{code}", code)}
             </p>
-            <Link href="/track" className="w-full py-3 bg-primary-800 hover:bg-primary-900 text-white font-bold rounded-xl text-xs uppercase tracking-wider mt-2">
-              Back to Search
+            <Link href="/track" className="w-full py-3 bg-primary-800 hover:bg-primary-900 text-white font-bold rounded-xl text-xs uppercase tracking-wider mt-2 border-none">
+              {t.backSearch}
             </Link>
           </div>
         </main>
@@ -218,14 +350,20 @@ export default function TrackingDetailsPage() {
             </div>
           </Link>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLang(lang === "hi" ? "en" : "hi")}
+              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+            >
+              🌐 {lang === "hi" ? "English" : "हिन्दी"}
+            </button>
             <button 
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200"
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 cursor-pointer"
             >
-              <Printer className="w-4 h-4" /> Print Slip
+              <Printer className="w-4 h-4" /> {t.printSlip}
             </button>
             <Link href="/track" className="flex items-center gap-1 px-3 py-2 text-slate-500 hover:text-primary-800 text-xs font-bold transition-all">
-              <ArrowLeft className="w-4 h-4" /> Exit
+              <ArrowLeft className="w-4 h-4" /> {t.exit}
             </Link>
           </div>
         </div>
@@ -238,14 +376,14 @@ export default function TrackingDetailsPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm print:hidden">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400">Live Status Tracker</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400">{t.liveTracker}</span>
               <h2 className="text-lg font-extrabold text-primary-800 flex items-center gap-2">
-                Booking ID: <span className="font-mono font-black text-accent-500">{code}</span>
+                {t.bookingId} <span className="font-mono font-black text-accent-500">{code}</span>
               </h2>
             </div>
             <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
               <RotateCw className="w-3.5 h-3.5 animate-spin-slow" />
-              Auto refreshing (updates live)
+              {t.autoRefresh}
             </span>
           </div>
 
@@ -255,9 +393,9 @@ export default function TrackingDetailsPage() {
               <div className="w-12 h-12 bg-red-100 text-red-650 rounded-full flex items-center justify-center border border-red-200">
                 <XCircle className="w-6 h-6 text-red-650" />
               </div>
-              <h3 className="font-display font-extrabold text-base text-red-800 uppercase tracking-wide">Booking Cancelled</h3>
+              <h3 className="font-display font-extrabold text-base text-red-800 uppercase tracking-wide">{t.cancelledTitle}</h3>
               <p className="text-xs text-red-650 max-w-md">
-                This booking has been cancelled. If you need any assistance, please contact customer support.
+                {t.cancelledDesc}
               </p>
             </div>
           ) : (
@@ -267,7 +405,7 @@ export default function TrackingDetailsPage() {
                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs transition-all ${getStepStatusClass("submitted", inquiry.status)}`}>
                   1
                 </div>
-                <span className="text-[10px] font-bold text-slate-600 mt-2 text-center">Submitted</span>
+                <span className="text-[10px] font-bold text-slate-600 mt-2 text-center">{t.submitted}</span>
               </div>
               <div className={`flex-1 h-0.5 transition-all ${getStepProgressLineClass("submitted", inquiry.status)}`}></div>
 
@@ -276,7 +414,7 @@ export default function TrackingDetailsPage() {
                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs transition-all ${getStepStatusClass("quoted", inquiry.status)}`}>
                   2
                 </div>
-                <span className="text-[10px] font-bold text-slate-600 mt-2 text-center">Price Quoted</span>
+                <span className="text-[10px] font-bold text-slate-600 mt-2 text-center">{t.quoted}</span>
               </div>
               <div className={`flex-1 h-0.5 transition-all ${getStepProgressLineClass("quoted", inquiry.status)}`}></div>
 
@@ -285,7 +423,7 @@ export default function TrackingDetailsPage() {
                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs transition-all ${getStepStatusClass("confirmed", inquiry.status)}`}>
                   3
                 </div>
-                <span className="text-[10px] font-bold text-slate-600 mt-2 text-center">Confirmed</span>
+                <span className="text-[10px] font-bold text-slate-600 mt-2 text-center">{t.confirmed}</span>
               </div>
               <div className={`flex-1 h-0.5 transition-all ${getStepProgressLineClass("confirmed", inquiry.status)}`}></div>
 
@@ -294,7 +432,7 @@ export default function TrackingDetailsPage() {
                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs transition-all ${getStepStatusClass("completed", inquiry.status)}`}>
                   4
                 </div>
-                <span className="text-[10px] font-bold text-slate-600 mt-2 text-center">Completed</span>
+                <span className="text-[10px] font-bold text-slate-600 mt-2 text-center">{t.completedStep}</span>
               </div>
             </div>
           )}
@@ -303,30 +441,30 @@ export default function TrackingDetailsPage() {
           <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center text-xs mt-6">
             {inquiry.status === "pending" && (
               <p className="text-slate-600">
-                🟠 <strong>Status: Inquiry Logged.</strong> Rohit Kumar Singh will call you shortly to discuss pricing & vehicle availability.
+                🟠 <strong>{lang === "hi" ? "स्थिति: बुकिंग दर्ज हो गई है।" : "Status: Inquiry Logged."}</strong> {lang === "hi" ? "रोहित भैया जल्दी ही आपको फ़ोन करके किराया और गाड़ी तय करेंगे।" : "Rohit Kumar Singh will call you shortly to discuss pricing & vehicle availability."}
               </p>
             )}
             {inquiry.status === "contacted" && !inquiry.driver_name && (
               <p className="text-primary-800 font-semibold">
-                🔵 <strong>Status: Price Quoted.</strong> Rohit has contacted you. Finalized booking amount: <span className="text-accent-500 font-bold text-sm">₹{inquiry.quoted_amount || "TBD"}</span>. Awaiting vehicle/driver assignment.
+                🔵 <strong>{lang === "hi" ? "स्थिति: किराया तय हो गया है।" : "Status: Price Quoted."}</strong> {lang === "hi" ? `रोहित भैया ने आपसे बात कर ली है। फाइनल किराया: ` : `Rohit has contacted you. Finalized booking amount: `}<span className="text-accent-500 font-bold text-sm">₹{inquiry.quoted_amount || "TBD"}</span>{lang === "hi" ? `। गाड़ी और ड्राइवर अलॉट होना बाकी है।` : `. Awaiting vehicle/driver assignment.`}
               </p>
             )}
             {inquiry.status === "contacted" && inquiry.driver_name && (
               <p className="text-emerald-700 font-semibold">
-                🟢 <strong>Status: Booking Confirmed.</strong> Driver details have been assigned. See details below. Ready for transit!
+                🟢 <strong>{lang === "hi" ? "स्थिति: बुकिंग पक्की हो गई है।" : "Status: Booking Confirmed."}</strong> {lang === "hi" ? "ड्राइवर और गाड़ी तय हो चुकी है। डिटेल्स नीचे देखें। सामान भेजने के लिए तैयार रखें!" : "Driver details have been assigned. See details below. Ready for transit!"}
               </p>
             )}
             {inquiry.status === "completed" && (
               <p className="text-emerald-700 font-semibold">
-                ✅ <strong>Status: Trip Completed.</strong> Maal safely delivered. Thank you for choosing Krishna Transport & Travel Management!
+                ✅ <strong>{lang === "hi" ? "स्थिति: ट्रिप पूरा हो गया है।" : "Status: Trip Completed."}</strong> {lang === "hi" ? "सामान सुरक्षित रूप से पहुँचा दिया गया है। कृष्णा ट्रांसपोर्ट चुनने के लिए धन्यवाद!" : "Maal safely delivered. Thank you for choosing Krishna Transport & Travel Management!"}
               </p>
             )}
             {inquiry.status === "cancelled" && (
               <div className="text-slate-600">
-                <p className="font-semibold text-red-700">❌ <strong>Status: Cancelled.</strong> This booking is no longer active.</p>
+                <p className="font-semibold text-red-700">❌ <strong>{lang === "hi" ? "स्थिति: बुकिंग रद्द है।" : "Status: Cancelled."}</strong> {t.cancelStatus}</p>
                 {inquiry.cancellation_reason && (
                   <p className="mt-1.5 text-[11px] text-slate-500">
-                    Reason: <span className="font-mono bg-white px-2 py-0.5 border border-slate-200 rounded font-semibold text-slate-700">{inquiry.cancellation_reason}</span>
+                    {lang === "hi" ? "कारण:" : "Reason:"} <span className="font-mono bg-white px-2 py-0.5 border border-slate-200 rounded font-semibold text-slate-700">{inquiry.cancellation_reason}</span>
                   </p>
                 )}
               </div>
@@ -346,7 +484,7 @@ export default function TrackingDetailsPage() {
 
             <div className="flex justify-between items-start border-b border-dashed border-slate-200 pb-6">
               <div>
-                <h1 className="font-display font-extrabold text-xl text-primary-800">Booking Receipt</h1>
+                <h1 className="font-display font-extrabold text-xl text-primary-800">{t.receiptTitle}</h1>
                 <span className="text-[10px] font-bold text-slate-400">Krishna Transport & Travel Management</span>
               </div>
               <div className="text-right">
@@ -360,14 +498,14 @@ export default function TrackingDetailsPage() {
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-primary-600 shrink-0" />
                 <div>
-                  <span className="block text-[9px] uppercase font-bold text-slate-400 leading-tight">Pickup</span>
+                  <span className="block text-[9px] uppercase font-bold text-slate-400 leading-tight">{t.pickupLabel}</span>
                   <span className="text-slate-800">{inquiry.pickup_location}</span>
                 </div>
               </div>
               <div className="text-slate-400 font-bold text-base tracking-widest">&rarr;</div>
               <div className="flex items-center gap-2 text-right">
                 <div className="flex flex-col items-end">
-                  <span className="block text-[9px] uppercase font-bold text-slate-400 leading-tight">Drop Point</span>
+                  <span className="block text-[9px] uppercase font-bold text-slate-400 leading-tight">{t.dropLabel}</span>
                   <span className="text-slate-800">{inquiry.drop_location}</span>
                 </div>
               </div>
@@ -376,51 +514,52 @@ export default function TrackingDetailsPage() {
             {/* Info Grid */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
               <div>
-                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Customer Name</span>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">{t.custName}</span>
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                   <User className="w-4 h-4 text-slate-400" /> {inquiry.full_name}
                 </span>
               </div>
 
               <div>
-                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Phone Number</span>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">{t.phone}</span>
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                   <Phone className="w-4 h-4 text-slate-400" /> {inquiry.phone_number}
                 </span>
               </div>
 
               <div>
-                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Booking Date</span>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">{t.date}</span>
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-slate-400" /> {inquiry.booking_date}
                 </span>
               </div>
 
               <div>
-                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Preferred Time</span>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">{t.time}</span>
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-slate-400" /> {inquiry.booking_time}
                 </span>
               </div>
 
               <div>
-                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Service Type</span>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">{t.srvType}</span>
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                  <Package className="w-4 h-4 text-slate-400" /> {inquiry.goods_type}
+                  <Package className="w-4 h-4 text-slate-400" />
+                  {servicesMap[inquiry.goods_type] ? servicesMap[inquiry.goods_type][lang] : inquiry.goods_type}
                 </span>
               </div>
 
               <div>
-                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Est. Weight</span>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">{t.weight}</span>
                 <span className="font-bold text-slate-800">
-                  {inquiry.weight || "Not specified"}
+                  {inquiry.weight || t.notSpecified}
                 </span>
               </div>
             </div>
 
             {inquiry.notes && (
               <div className="border-t border-slate-100 pt-5">
-                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Goods Description / Instructions</span>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">{t.notesLabel}</span>
                 <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-xs text-slate-600 leading-relaxed font-mono">
                   {inquiry.notes}
                 </div>
@@ -430,13 +569,13 @@ export default function TrackingDetailsPage() {
             {/* Terms and Signatures */}
             <div className="border-t border-dashed border-slate-200 pt-6 mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
               <div className="text-[10px] text-slate-400 max-w-sm flex flex-col gap-1">
-                <span className="font-bold uppercase text-slate-500">Receipt Notes & Terms:</span>
-                <span>• Pricing is subject to actual distance, road tolls, and labor requested.</span>
-                <span>• Minimum cancellation charges of ₹200 apply once driver is dispatched.</span>
-                <span>• Please verify your items checklist before loading with the driver.</span>
+                <span className="font-bold uppercase text-slate-500">{t.receiptTermsTitle}</span>
+                {t.termsList.map((term, i) => (
+                  <span key={i}>{term}</span>
+                ))}
               </div>
               <div className="border-t border-slate-200 pt-2 w-36 text-center">
-                <span className="block text-[8px] uppercase tracking-widest text-slate-400">Authorized Sign</span>
+                <span className="block text-[8px] uppercase tracking-widest text-slate-400">{t.authSign}</span>
                 <span className="font-display font-black text-xs text-primary-800 uppercase tracking-widest leading-none">KRISHNA LOGISTICS</span>
               </div>
             </div>
@@ -449,28 +588,28 @@ export default function TrackingDetailsPage() {
                 <div className="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center border border-red-100">
                   <XCircle className="w-5 h-5" />
                 </div>
-                <h4 className="font-bold text-slate-700 text-sm">Booking Cancelled</h4>
+                <h4 className="font-bold text-slate-700 text-sm">{t.cancelledTitle}</h4>
                 <p className="text-[10px] text-slate-400 max-w-[200px] leading-relaxed mx-auto">
-                  This transaction has been terminated. No driver or transit will be dispatched for this booking code.
+                  {t.cancelledDesc}
                 </p>
               </div>
             ) : (
               <>
                 {/* Price Quote Panel */}
                 <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col gap-4 text-center">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Negotiated Amount</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400">{t.pricingTitle}</span>
                   <div className="bg-slate-50 border border-slate-150 py-5 rounded-2xl flex flex-col items-center justify-center">
                     {inquiry.quoted_amount ? (
                       <>
                         <span className="text-3xl font-extrabold text-primary-800 flex items-center justify-center gap-1">
                           <Coins className="w-7 h-7 text-accent-500" /> ₹{inquiry.quoted_amount}
                         </span>
-                        <span className="text-[10px] text-emerald-600 font-bold uppercase mt-1">Confirmed Rate</span>
+                        <span className="text-[10px] text-emerald-600 font-bold uppercase mt-1">{t.priceConfirmed}</span>
                       </>
                     ) : (
                       <>
-                        <span className="text-xl font-bold text-slate-400">₹ Price Pending</span>
-                        <span className="text-[10px] text-slate-400 mt-1 px-4">Manual price quote is discussed over call.</span>
+                        <span className="text-xl font-bold text-slate-400">{t.pricePending}</span>
+                        <span className="text-[10px] text-slate-400 mt-1 px-4">{t.pricePendingDesc}</span>
                       </>
                     )}
                   </div>
@@ -478,7 +617,7 @@ export default function TrackingDetailsPage() {
                     href="tel:7080360217"
                     className="w-full py-2.5 bg-primary-800 hover:bg-primary-900 text-white font-bold rounded-xl text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-1.5"
                   >
-                    <Phone className="w-3.5 h-3.5" /> Call Owner to Negotiate
+                    <Phone className="w-3.5 h-3.5" /> {t.callOwner}
                   </a>
                 </div>
 
@@ -490,20 +629,20 @@ export default function TrackingDetailsPage() {
                         <Truck className="w-4.5 h-4.5" />
                       </div>
                       <div>
-                        <span className="block text-[8px] uppercase font-bold text-slate-400">Assigned Transit</span>
-                        <span className="block text-sm font-extrabold text-slate-800">Driver & Vehicle</span>
+                        <span className="block text-[8px] uppercase font-bold text-slate-400">{t.assignedTransit}</span>
+                        <span className="block text-sm font-extrabold text-slate-800">{t.driverVehicle}</span>
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-3 text-xs">
                       <div>
-                        <span className="block text-[9px] uppercase font-bold text-slate-400 mb-0.5">Driver Name</span>
+                        <span className="block text-[9px] uppercase font-bold text-slate-400 mb-0.5">{t.driverName}</span>
                         <span className="font-bold text-slate-800 flex items-center gap-1.5">
                           <User className="w-4 h-4 text-slate-400" /> {inquiry.driver_name}
                         </span>
                       </div>
                       <div>
-                        <span className="block text-[9px] uppercase font-bold text-slate-400 mb-0.5">Vehicle Number</span>
+                        <span className="block text-[9px] uppercase font-bold text-slate-400 mb-0.5">{t.vehicleNumber}</span>
                         <span className="font-bold text-slate-800 flex items-center gap-1.5">
                           <Truck className="w-4 h-4 text-slate-400" /> {inquiry.vehicle_number || "UP-65-XXXX"}
                         </span>
@@ -514,7 +653,7 @@ export default function TrackingDetailsPage() {
                       href={`tel:${inquiry.driver_phone}`}
                       className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-50"
                     >
-                      <Phone className="w-3.5 h-3.5" /> Call Driver
+                      <Phone className="w-3.5 h-3.5" /> {t.callDriver}
                     </a>
                   </div>
                 ) : (
@@ -522,9 +661,9 @@ export default function TrackingDetailsPage() {
                     <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center border border-slate-100">
                       <Truck className="w-5 h-5" />
                     </div>
-                    <h4 className="font-bold text-slate-700 text-sm">Driver Details Awaiting</h4>
+                    <h4 className="font-bold text-slate-700 text-sm">{t.driverAwaiting}</h4>
                     <p className="text-[10px] text-slate-400 max-w-[200px] leading-relaxed mx-auto">
-                      Once your booking is confirmed, Rohit will assign a driver. Driver name and phone will appear here live.
+                      {t.driverAwaitingDesc}
                     </p>
                   </div>
                 )}
@@ -535,7 +674,7 @@ export default function TrackingDetailsPage() {
                     onClick={() => setShowCancelModal(true)}
                     className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 font-bold rounded-xl text-xs uppercase tracking-wider transition-all border border-red-200 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-red-50/50"
                   >
-                    <XCircle className="w-3.5 h-3.5" /> Cancel Booking
+                    <XCircle className="w-3.5 h-3.5" /> {t.cancelBtn}
                   </button>
                 )}
               </>
@@ -556,8 +695,8 @@ export default function TrackingDetailsPage() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
           <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl max-w-md w-full p-6 sm:p-8 flex flex-col gap-5 relative animate-in fade-in zoom-in-95 duration-200">
             <div>
-              <h3 className="font-display font-extrabold text-xl text-primary-800">Cancel Booking</h3>
-              <p className="text-xs text-slate-500 mt-1">Please tell us why you are cancelling your booking. Your feedback helps us improve.</p>
+              <h3 className="font-display font-extrabold text-xl text-primary-800">{t.modalTitle}</h3>
+              <p className="text-xs text-slate-500 mt-1">{t.modalDesc}</p>
             </div>
 
             {cancelError && (
@@ -601,9 +740,9 @@ export default function TrackingDetailsPage() {
             {/* Other details field */}
             {cancelReasonOption === "Other Reason / कोई अन्य कारण" && (
               <div className="flex flex-col gap-1.5 animate-in slide-in-from-top-2 duration-200">
-                <label className="text-[10px] font-bold text-slate-500 uppercase">Specify Reason</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase">{t.specifyReason}</label>
                 <textarea
-                  placeholder="Explain your problem here... (आपकी समस्या यहाँ लिखें)"
+                  placeholder={t.explainPlaceholder}
                   value={otherReasonDetails}
                   onChange={(e) => {
                     setOtherReasonDetails(e.target.value);
@@ -627,21 +766,21 @@ export default function TrackingDetailsPage() {
                 disabled={cancelLoading}
                 className="flex-1 py-3 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl text-xs uppercase tracking-wide transition-all cursor-pointer text-center disabled:opacity-50"
               >
-                Go Back
+                {t.modalBack}
               </button>
               <button
                 type="button"
                 onClick={handleCancelBooking}
                 disabled={cancelLoading}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wide transition-all cursor-pointer shadow-md shadow-red-50 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wide transition-all cursor-pointer shadow-md shadow-red-50 flex items-center justify-center gap-1.5 disabled:opacity-50 border-none"
               >
                 {cancelLoading ? (
                   <>
                     <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    Cancelling...
+                    {t.modalCancelling}
                   </>
                 ) : (
-                  "Confirm Cancel"
+                  t.modalConfirm
                 )}
               </button>
             </div>
