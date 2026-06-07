@@ -340,10 +340,10 @@ function HomeContent() {
             </div>
             <div>
               <span className="block font-display font-extrabold text-sm sm:text-base text-primary-800 leading-tight group-hover:text-primary-900 transition-colors">
-                Krishna Transport
+                {lang === "hi" ? "कृष्णा ट्रांसपोर्ट" : "Krishna Transport"}
               </span>
               <span className="hidden sm:block font-sans font-bold text-[9px] text-slate-400 uppercase tracking-widest leading-none mt-0.5">
-                &amp; Travel Management
+                {lang === "hi" ? "& ट्रेवल मैनेजमेंट" : "& Travel Management"}
               </span>
             </div>
           </Link>
@@ -452,7 +452,7 @@ function HomeContent() {
               alt="Krishna Transport Tata Magic Loader" 
               fill 
               className="object-cover bg-white group-hover:scale-105 transition-transform duration-700"
-              priority
+              priority={true}
               sizes="(max-width: 1024px) 100vw, 40vw"
             />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent p-6 text-white">
@@ -903,8 +903,12 @@ function HomeContent() {
                 />
               </div>
               <div>
-                <span className="block font-display font-extrabold text-base tracking-wide text-white leading-tight">Krishna Transport</span>
-                <span className="text-[10px] text-primary-300 font-bold uppercase tracking-wider leading-none">&amp; Travel Management</span>
+                <span className="block font-display font-extrabold text-base tracking-wide text-white leading-tight">
+                  {lang === "hi" ? "कृष्णा ट्रांसपोर्ट" : "Krishna Transport"}
+                </span>
+                <span className="text-[10px] text-primary-300 font-bold uppercase tracking-wider leading-none">
+                  {lang === "hi" ? "& ट्रेवल मैनेजमेंट" : "& Travel Management"}
+                </span>
               </div>
             </div>
             
@@ -973,7 +977,7 @@ function HomeContent() {
         <div className="border-t border-slate-900 bg-slate-950/80 py-6 text-center sm:text-left">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-[10px] text-slate-500">
-              © {new Date().getFullYear()} Krishna Transport &amp; Travel Management. All Rights Reserved.
+              © {new Date().getFullYear()} {lang === "hi" ? "कृष्णा ट्रांसपोर्ट & ट्रेवल मैनेजमेंट। सर्वाधिकार सुरक्षित।" : "Krishna Transport & Travel Management. All Rights Reserved."}
             </p>
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
               <span>{t.ownerLabel} <strong className="text-slate-400">Rohit Kumar Singh</strong></span>

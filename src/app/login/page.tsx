@@ -254,7 +254,7 @@ export default function LoginPage() {
             />
           </div>
           <span className="font-display font-extrabold text-sm sm:text-base text-primary-800 leading-tight">
-            Krishna Transport
+            {lang === "hi" ? "कृष्णा ट्रांसपोर्ट" : "Krishna Transport"}
           </span>
         </Link>
         <div className="flex items-center gap-3">
@@ -460,7 +460,7 @@ export default function LoginPage() {
 
       {/* Footer copyright */}
       <footer className="w-full border-t border-slate-100 py-4 text-center text-[10px] sm:text-xs font-bold text-slate-400 bg-white">
-        © {new Date().getFullYear()} Krishna Transport & Travel Management. All Rights Reserved.
+        © {new Date().getFullYear()} {lang === "hi" ? "कृष्णा ट्रांसपोर्ट & ट्रेवल मैनेजमेंट। सर्वाधिकार सुरक्षित।" : "Krishna Transport & Travel Management. All Rights Reserved."}
       </footer>
     </div>
   );

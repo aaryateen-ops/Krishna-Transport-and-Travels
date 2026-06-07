@@ -29,9 +29,11 @@ import {
   ShieldAlert
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons";
+import { useLanguage } from "@/lib/useLanguage";
 
 export default function CustomerDashboard() {
   const router = useRouter();
+  const [lang, setLang] = useLanguage();
 
   // User States
   const [user, setUser] = useState<any>(null);
@@ -230,18 +232,26 @@ export default function CustomerDashboard() {
             </div>
             <div>
               <span className="block font-display font-extrabold text-xs sm:text-sm text-primary-800 leading-tight">
-                Krishna Transport
+                {lang === "hi" ? "कृष्णा ट्रांसपोर्ट" : "Krishna Transport"}
               </span>
               <span className="block font-sans font-bold text-[8px] text-slate-400 uppercase tracking-wider">
-                Customer Portal
+                {lang === "hi" ? "कस्टमर पोर्टल" : "Customer Portal"}
               </span>
             </div>
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Language Switcher */}
+            <button
+              onClick={() => setLang(lang === "hi" ? "en" : "hi")}
+              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+            >
+              🌐 {lang === "hi" ? "English" : "हिन्दी"}
+            </button>
+
             <div className="hidden md:flex flex-col text-right">
               <span className="text-xs font-extrabold text-slate-700 leading-tight">
-                {userMetadata.full_name || "Valued Customer"}
+                {userMetadata.full_name || (lang === "hi" ? "प्रिय ग्राहक" : "Valued Customer")}
               </span>
               <span className="text-[10px] font-bold text-slate-400">
                 {userMetadata.phone_number || user?.email}
@@ -629,7 +639,7 @@ export default function CustomerDashboard() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200/80 bg-white py-6 mt-12 text-center text-xs font-bold text-slate-400 print:hidden">
-        © {new Date().getFullYear()} Krishna Transport & Travel Management. Varanasi, UP.
+        © {new Date().getFullYear()} {lang === "hi" ? "कृष्णा ट्रांसपोर्ट & ट्रेवल मैनेजमेंट। वाराणसी, उत्तर प्रदेश।" : "Krishna Transport & Travel Management. Varanasi, UP."}
       </footer>
     </div>
   );

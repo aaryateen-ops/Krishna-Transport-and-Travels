@@ -13,6 +13,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Admin client for backend Server Actions (bypasses RLS read/write blocks using custom header)
 export const supabaseAdmin = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
   global: {
     headers: {
       'x-admin-key': adminPassword || '',

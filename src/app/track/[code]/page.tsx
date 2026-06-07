@@ -342,10 +342,10 @@ export default function TrackingDetailsPage() {
             <Image src="/logo.png" alt="Logo" width={32} height={32} />
             <div>
               <span className="block font-display font-extrabold text-sm text-primary-800 leading-tight">
-                Krishna Transport
+                {lang === "hi" ? "कृष्णा ट्रांसपोर्ट" : "Krishna Transport"}
               </span>
               <span className="block font-sans font-medium text-[9px] text-slate-500 uppercase tracking-widest">
-                & Travel Management
+                {lang === "hi" ? "& ट्रेवल मैनेजमेंट" : "& Travel Management"}
               </span>
             </div>
           </Link>
@@ -485,7 +485,9 @@ export default function TrackingDetailsPage() {
             <div className="flex justify-between items-start border-b border-dashed border-slate-200 pb-6">
               <div>
                 <h1 className="font-display font-extrabold text-xl text-primary-800">{t.receiptTitle}</h1>
-                <span className="text-[10px] font-bold text-slate-400">Krishna Transport & Travel Management</span>
+                <span className="text-[10px] font-bold text-slate-400">
+                  {lang === "hi" ? "कृष्णा ट्रांसपोर्ट & ट्रेवल मैनेजमेंट" : "Krishna Transport & Travel Management"}
+                </span>
               </div>
               <div className="text-right">
                 <span className="block text-[10px] uppercase font-bold text-slate-400">Booking ID</span>
@@ -686,7 +688,7 @@ export default function TrackingDetailsPage() {
       {/* Footer */}
       <footer className="py-6 border-t border-slate-200 bg-white text-center print:hidden">
         <span className="text-[10px] text-slate-400 font-medium">
-          © 2026 Krishna Transport & Travel Management. Varanasi, 221007.
+          © {new Date().getFullYear()} {lang === "hi" ? "कृष्णा ट्रांसपोर्ट & ट्रेवल मैनेजमेंट। वाराणसी, 221007।" : "Krishna Transport & Travel Management. Varanasi, 221007."}
         </span>
       </footer>
 

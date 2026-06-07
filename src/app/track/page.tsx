@@ -54,10 +54,10 @@ export default function TrackSearchPage() {
             <Image src="/logo.png" alt="Logo" width={32} height={32} className="object-contain" />
             <div>
               <span className="block font-display font-extrabold text-sm text-primary-800 leading-tight">
-                Krishna Transport
+                {lang === "hi" ? "कृष्णा ट्रांसपोर्ट" : "Krishna Transport"}
               </span>
               <span className="block font-sans font-medium text-[9px] text-slate-500 uppercase tracking-widest">
-                & Travel Management
+                {lang === "hi" ? "& ट्रेवल मैनेजमेंट" : "& Travel Management"}
               </span>
             </div>
           </Link>
@@ -128,7 +128,7 @@ export default function TrackSearchPage() {
       {/* Footer */}
       <footer className="py-6 border-t border-slate-200 bg-white text-center">
         <span className="text-[10px] text-slate-400 font-medium">
-          © 2026 Krishna Transport & Travel Management. Varanasi, 221007.
+          © {new Date().getFullYear()} {lang === "hi" ? "कृष्णा ट्रांसपोर्ट & ट्रेवल मैनेजमेंट। वाराणसी, 221007।" : "Krishna Transport & Travel Management. Varanasi, 221007."}
         </span>
       </footer>
     </div>
