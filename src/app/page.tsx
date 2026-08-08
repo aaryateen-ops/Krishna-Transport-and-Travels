@@ -414,7 +414,7 @@ function HomeContent() {
               <CheckCircle2 className="w-4 h-4 text-accent-500 animate-pulse" />
               {t.metaSubtitle}
             </div>
-            <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl text-primary-800 leading-[1.1]">
+            <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 leading-[1.1]">
               {t.heroHeading} <br />
               <span className="text-accent-500">{t.heroHeadingHighlight}</span>
             </h1>
@@ -424,7 +424,7 @@ function HomeContent() {
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mt-2">
               <Link 
                 href="#inquiry" 
-                className="w-full sm:w-auto px-8 py-4 bg-primary-800 hover:bg-primary-900 text-white font-bold text-sm sm:text-base rounded-2xl shadow-lg shadow-primary-800/10 hover:shadow-xl hover:shadow-primary-800/20 transition-all text-center uppercase tracking-wider hover:-translate-y-0.5"
+                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-primary-700 to-primary-800 hover:from-primary-800 hover:to-primary-900 text-white font-bold text-sm sm:text-base rounded-2xl shadow-xl shadow-primary-800/20 hover:shadow-2xl hover:shadow-primary-800/30 transition-all duration-300 text-center uppercase tracking-wider hover:-translate-y-1"
               >
                 {t.getQuoteBtn}
               </Link>
@@ -477,7 +477,7 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.servicesTag}</span>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-primary-800">
+            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
               {t.servicesTitle}
             </h2>
             <p className="text-slate-500 text-sm sm:text-base">
@@ -494,7 +494,7 @@ function HomeContent() {
               return (
                 <div 
                   key={idx}
-                  className="group p-8 rounded-3xl bg-white border border-slate-200/60 hover:border-primary-600/40 hover:shadow-xl hover:shadow-primary-800/5 transition-all duration-300 flex flex-col justify-between min-h-[250px] relative overflow-hidden"
+                  className="group p-8 rounded-3xl bg-white border border-slate-200/60 hover:border-primary-300 hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.15)] hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between min-h-[250px] relative overflow-hidden"
                 >
                   {/* Hover Accent Top Line */}
                   <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary-800/0 via-primary-800/20 to-primary-800/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -567,7 +567,7 @@ function HomeContent() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 flex flex-col gap-6 text-center lg:text-left">
               <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.whyTag}</span>
-              <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-primary-800">
+              <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
                 {t.whyTitle}
               </h2>
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
@@ -591,8 +591,8 @@ function HomeContent() {
                 const fDesc = factor.desc[lang];
                 
                 return (
-                  <div key={idx} className="bg-white p-7 rounded-3xl border border-slate-200/60 shadow-sm flex gap-4 hover:shadow-md hover:border-primary-100/60 transition-all duration-300">
-                    <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-800 shrink-0">
+                  <div key={idx} className="bg-white p-7 rounded-3xl border border-slate-200/60 shadow-sm flex gap-4 hover:shadow-xl hover:shadow-primary-900/5 hover:-translate-y-1 hover:border-primary-200 transition-all duration-300 group cursor-default">
+                    <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-800 shrink-0 group-hover:scale-110 group-hover:bg-primary-100 transition-transform duration-300">
                       <IconComp className="w-5 h-5" />
                     </div>
                     <div>
@@ -612,7 +612,7 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.fleetTag}</span>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-primary-800">
+            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
               {t.fleetSectionTitle}
             </h2>
             <p className="text-slate-500 text-sm sm:text-base">
@@ -629,7 +629,7 @@ function HomeContent() {
               return (
                 <div 
                   key={idx}
-                  className="bg-white rounded-3xl border border-slate-200/60 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary-800/5 hover:-translate-y-0.5 transition-all duration-300 flex flex-col group"
+                  className="bg-white rounded-3xl border border-slate-200/60 overflow-hidden shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.12)] hover:-translate-y-2 transition-all duration-300 flex flex-col group"
                 >
                   <div className="relative h-48 bg-slate-50/50 border-b border-slate-100 overflow-hidden">
                     <Image 
@@ -684,7 +684,7 @@ function HomeContent() {
                   {t.networkTag}
                 </div>
                 
-                <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-primary-800 mb-4 leading-tight">
+                <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 mb-4 leading-tight">
                   {lang === "hi" ? <>पूर्वांचल (<span className="text-accent-500">Eastern UP</span>) में एक्सप्रेस गाड़ियां</> : <>{t.networkTitle}</>}
                 </h2>
                 
@@ -785,7 +785,7 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-5 flex flex-col justify-center gap-6">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest text-center lg:text-left">{t.inquiryTag}</span>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-primary-800 text-center lg:text-left">
+            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 text-center lg:text-left">
               {t.inquiryTitle}
             </h2>
             <p className="text-slate-600 text-sm sm:text-base text-center lg:text-left mb-4">
@@ -828,7 +828,7 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.testiTag}</span>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-primary-800">
+            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
               {t.testiTitle}
             </h2>
             <p className="text-slate-500 text-sm sm:text-base">
