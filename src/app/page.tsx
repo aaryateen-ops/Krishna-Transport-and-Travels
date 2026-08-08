@@ -159,6 +159,7 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const initialService = searchParams.get("service") || "";
   const [lang, setLang] = useLanguage();
+  const [showVideoModal, setShowVideoModal] = React.useState(false);
 
   const t = {
     hi: {
@@ -239,7 +240,9 @@ function HomeContent() {
       hqLabel: "मुख्य कार्यालय:",
       portalLogin: "पोर्टल लॉगिन",
       trackBookingText: "ट्रैक बुकिंग",
-      callTextMobile: "फ़ोन पर बुकिंग (Call)"
+      callTextMobile: "फ़ोन पर बुकिंग (Call)",
+      watchVideo: "हमारा काम वीडियो में देखें",
+      closeBtn: "बंद करें"
     },
     en: {
       metaTitle: "Krishna Transport Varanasi",
@@ -319,7 +322,9 @@ function HomeContent() {
       hqLabel: "Headquarters:",
       portalLogin: "Portal Login",
       trackBookingText: "Track Booking",
-      callTextMobile: "Call"
+      callTextMobile: "Call",
+      watchVideo: "Watch Our Business Video",
+      closeBtn: "Close"
     }
   }[lang];
 
@@ -455,7 +460,31 @@ function HomeContent() {
               priority={true}
               sizes="(max-width: 1024px) 100vw, 40vw"
             />
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent p-6 text-white">
+            {/* Pulsing Play Button Overlay */}
+            <button 
+              onClick={() => setShowVideoModal(true)}
+              className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/20 group-hover:bg-slate-950/40 transition-colors duration-300 cursor-pointer focus:outline-none z-10"
+              title={t.watchVideo}
+            >
+              <div className="relative flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white/95 text-primary-800 rounded-full shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-white group-hover:text-accent-500">
+                <span className="absolute inset-0 rounded-full bg-white/40 animate-ping"></span>
+                <svg 
+                  className="w-7 h-7 sm:w-9 sm:h-9 translate-x-0.5 fill-current" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+              </div>
+              <span className="mt-3.5 px-3 py-1.5 bg-slate-900/80 backdrop-blur-md text-white text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full border border-white/20 shadow-lg transform translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                {t.watchVideo}
+              </span>
+            </button>
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent p-6 text-white z-20">
               <span className="text-xs font-extrabold uppercase tracking-wider text-accent-500">{t.fleetTitle}</span>
               <h3 className="text-lg font-display font-extrabold">{t.fleetSubtitle}</h3>
               <p className="text-xs text-slate-300">{t.fleetDesc}</p>
@@ -1002,6 +1031,40 @@ function HomeContent() {
           <span>{lang === "hi" ? "फ़ोन पर बुकिंग (Call)" : "Book on Call"}</span>
         </a>
       </div>
+
+      {/* 8. Video Modal Popup */}
+      {showVideoModal && (
+        <div 
+          className="fixed inset-0 z-[100] bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300 animate-in fade-in"
+          onClick={() => setShowVideoModal(false)}
+        >
+          <div 
+            className="relative bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-800 w-full max-w-[360px] animate-in fade-in zoom-in-95 duration-300"
+            style={{ aspectRatio: "9/16" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowVideoModal(false)}
+              className="absolute top-4 right-4 z-10 w-9 h-9 bg-slate-900/60 hover:bg-red-600 text-white rounded-full flex items-center justify-center border border-white/10 transition-colors shadow-lg cursor-pointer"
+              title={t.closeBtn}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* YouTube Shorts IFrame Embed */}
+            <iframe
+              src="https://www.youtube.com/embed/HQ4dFmRiSFU?autoplay=1&rel=0&modestbranding=1"
+              title="Krishna Transport Shifting & Cargo Service"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="w-full h-full border-none object-cover"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
