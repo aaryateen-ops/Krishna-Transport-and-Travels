@@ -425,7 +425,7 @@ function HomeContent() {
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mt-2">
               <Link 
                 href="#inquiry" 
-                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-primary-700 to-primary-800 hover:from-primary-800 hover:to-primary-900 text-white font-bold text-sm sm:text-base rounded-2xl shadow-xl shadow-primary-800/20 hover:shadow-2xl hover:shadow-primary-800/30 transition-all duration-300 text-center uppercase tracking-wider hover:-translate-y-1"
+                className="w-full sm:w-auto px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white font-bold text-sm sm:text-base rounded-xl shadow-sm hover:shadow-md transition-all duration-300 text-center uppercase tracking-wider hover:-translate-y-0.5"
               >
                 {t.getQuoteBtn}
               </Link>
@@ -495,7 +495,7 @@ function HomeContent() {
               return (
                 <div 
                   key={idx}
-                  className="group p-8 rounded-3xl bg-white border border-slate-200/60 hover:border-primary-300 hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.15)] hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between min-h-[250px] relative overflow-hidden"
+                  className="group p-8 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[250px] relative overflow-hidden"
                 >
                   {/* Hover Accent Top Line */}
                   <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary-800/0 via-primary-800/20 to-primary-800/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -593,7 +593,7 @@ function HomeContent() {
                 const fDesc = factor.desc[lang];
                 
                 return (
-                  <div key={idx} className="bg-white p-7 rounded-3xl border border-slate-200/60 shadow-sm flex gap-4 hover:shadow-xl hover:shadow-primary-900/5 hover:-translate-y-1 hover:border-primary-200 transition-all duration-300 group cursor-default">
+                  <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex gap-4 hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 group cursor-default">
                     <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-800 shrink-0 group-hover:scale-110 group-hover:bg-primary-100 transition-transform duration-300">
                       <IconComp className="w-5 h-5" />
                     </div>
@@ -631,7 +631,7 @@ function HomeContent() {
               return (
                 <div 
                   key={idx}
-                  className="bg-white rounded-3xl border border-slate-200/60 overflow-hidden shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.12)] hover:-translate-y-2 transition-all duration-300 flex flex-col group"
+                  className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col group"
                 >
                   <div className="relative h-48 bg-slate-50/50 border-b border-slate-100 overflow-hidden">
                     <Image 
