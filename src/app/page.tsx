@@ -405,7 +405,7 @@ function HomeContent() {
       </header>
 
       {/* 2. Hero Section */}
-      <section className="bg-gradient-to-b from-primary-50 via-white to-white py-16 sm:py-24 border-b border-slate-100 relative overflow-hidden">
+      <section className="bg-gradient-to-b from-primary-50 via-white to-white py-20 sm:py-32 border-b border-slate-100 relative overflow-hidden">
         {/* Decorative background glow element */}
         <div className="absolute top-1/3 right-10 w-80 h-80 bg-primary-200/20 rounded-full blur-[100px] pointer-events-none"></div>
 
@@ -415,7 +415,7 @@ function HomeContent() {
               <CheckCircle2 className="w-4 h-4 text-accent-500 animate-pulse" />
               {t.metaSubtitle}
             </div>
-            <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 leading-[1.1]">
+            <h1 className="font-display font-black tracking-tight text-4xl sm:text-5xl lg:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 leading-[1.1]">
               {t.heroHeading} <br />
               <span className="text-accent-500">{t.heroHeadingHighlight}</span>
             </h1>
@@ -425,13 +425,13 @@ function HomeContent() {
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mt-2">
               <Link 
                 href="#inquiry" 
-                className="w-full sm:w-auto px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white font-bold text-sm sm:text-base rounded-xl shadow-sm hover:shadow-md transition-all duration-300 text-center uppercase tracking-wider hover:-translate-y-0.5"
+                className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-black text-sm sm:text-base rounded-full shadow-[0_8px_30px_rgba(37,99,235,0.3)] hover:shadow-[0_8px_30px_rgba(37,99,235,0.4)] transition-all duration-300 text-center uppercase tracking-widest hover:-translate-y-1"
               >
                 {t.getQuoteBtn}
               </Link>
               <a 
                 href="tel:7080360217"
-                className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 font-bold text-sm sm:text-base rounded-2xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5"
+                className="w-full sm:w-auto px-10 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-transparent font-black text-sm sm:text-base rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all flex items-center justify-center gap-2 hover:-translate-y-1"
               >
                 <Phone className="w-5 h-5 text-accent-500" />
                 {t.callBtn}
@@ -441,15 +441,15 @@ function HomeContent() {
             {/* Premium Stat Mini Cards */}
             <div className="grid grid-cols-3 gap-3.5 border-t border-slate-100 pt-8 mt-6">
               <div className="bg-slate-50/50 border border-slate-100 p-3 sm:p-4 rounded-2xl flex flex-col justify-center text-center lg:text-left shadow-sm">
-                <span className="block font-display font-extrabold text-2xl sm:text-3xl text-primary-800">₹600</span>
+                <span className="block font-display font-black tracking-tight text-2xl sm:text-3xl text-primary-800">₹600</span>
                 <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">{t.statMin}</span>
               </div>
               <div className="bg-slate-50/50 border border-slate-100 p-3 sm:p-4 rounded-2xl flex flex-col justify-center text-center lg:text-left shadow-sm">
-                <span className="block font-display font-extrabold text-2xl sm:text-3xl text-primary-800">24/7</span>
+                <span className="block font-display font-black tracking-tight text-2xl sm:text-3xl text-primary-800">24/7</span>
                 <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">{t.statSupport}</span>
               </div>
               <div className="bg-slate-50/50 border border-slate-100 p-3 sm:p-4 rounded-2xl flex flex-col justify-center text-center lg:text-left shadow-sm">
-                <span className="block font-display font-extrabold text-2xl sm:text-3xl text-primary-800">11+</span>
+                <span className="block font-display font-black tracking-tight text-2xl sm:text-3xl text-primary-800">11+</span>
                 <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">{t.statDistricts}</span>
               </div>
             </div>
@@ -466,7 +466,7 @@ function HomeContent() {
             />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent p-6 text-white z-20">
               <span className="text-xs font-extrabold uppercase tracking-wider text-accent-500">{t.fleetTitle}</span>
-              <h3 className="text-lg font-display font-extrabold">{t.fleetSubtitle}</h3>
+              <h3 className="text-lg font-display font-black tracking-tight">{t.fleetSubtitle}</h3>
               <p className="text-xs text-slate-300">{t.fleetDesc}</p>
             </div>
           </div>
@@ -474,11 +474,11 @@ function HomeContent() {
       </section>
 
       {/* 3. Services Section */}
-      <section id="services" className="py-16 sm:py-24 bg-white">
+      <section id="services" className="py-20 sm:py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.servicesTag}</span>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
+            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
               {t.servicesTitle}
             </h2>
             <p className="text-slate-500 text-sm sm:text-base">
@@ -495,7 +495,7 @@ function HomeContent() {
               return (
                 <div 
                   key={idx}
-                  className="group p-8 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[250px] relative overflow-hidden"
+                  className="group p-10 rounded-[2.5rem] bg-white border border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(37,99,235,0.12)] hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between min-h-[250px] relative overflow-hidden"
                 >
                   {/* Hover Accent Top Line */}
                   <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary-800/0 via-primary-800/20 to-primary-800/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -504,7 +504,7 @@ function HomeContent() {
                     <div className="w-12 h-12 bg-primary-50 text-primary-800 rounded-xl flex items-center justify-center group-hover:bg-primary-800 group-hover:text-white transition-all duration-350 mb-6 shrink-0">
                       <IconComp className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-display font-extrabold text-slate-800 mb-2 group-hover:text-primary-800 transition-colors">
+                    <h3 className="text-lg font-display font-black tracking-tight text-slate-800 mb-2 group-hover:text-primary-800 transition-colors">
                       {sName}
                     </h3>
                     <p className="text-slate-500 text-xs sm:text-sm leading-relaxed mb-6">
@@ -525,7 +525,7 @@ function HomeContent() {
       </section>
 
       {/* 3.5. Reel Section (Business Story) */}
-      <section className="py-16 sm:py-24 bg-white relative overflow-hidden border-t border-slate-200/60">
+      <section className="py-20 sm:py-32 bg-white relative overflow-hidden border-t border-slate-200/60">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-50/50 to-transparent pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-20 items-center">
@@ -533,7 +533,7 @@ function HomeContent() {
             {/* Text side */}
             <div className="flex flex-col gap-6 text-center lg:text-left order-2 lg:order-1">
                <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.reelTag}</span>
-               <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-primary-800 leading-tight">
+               <h2 className="font-display font-black tracking-tight text-3xl sm:text-5xl text-primary-800 leading-tight">
                   {t.reelTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600">{t.reelHighlight}</span>
                </h2>
                <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-lg mx-auto lg:mx-0">
@@ -564,12 +564,12 @@ function HomeContent() {
       </section>
 
       {/* 4. Why Choose Us Section */}
-      <section className="py-16 sm:py-24 bg-slate-50/50 border-y border-slate-200/60">
+      <section className="py-20 sm:py-32 bg-slate-50/50 border-y border-slate-200/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 flex flex-col gap-6 text-center lg:text-left">
               <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.whyTag}</span>
-              <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
+              <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
                 {t.whyTitle}
               </h2>
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
@@ -593,7 +593,7 @@ function HomeContent() {
                 const fDesc = factor.desc[lang];
                 
                 return (
-                  <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex gap-4 hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 group cursor-default">
+                  <div key={idx} className="bg-white p-8 rounded-[2rem] border border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex gap-5 hover:shadow-[0_8px_30px_rgba(37,99,235,0.1)] hover:-translate-y-1 transition-all duration-300 group cursor-default">
                     <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-800 shrink-0 group-hover:scale-110 group-hover:bg-primary-100 transition-transform duration-300">
                       <IconComp className="w-5 h-5" />
                     </div>
@@ -610,11 +610,11 @@ function HomeContent() {
       </section>
 
       {/* 5. Vehicle Fleet Section */}
-      <section id="fleet" className="py-16 sm:py-24 bg-white">
+      <section id="fleet" className="py-20 sm:py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.fleetTag}</span>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
+            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
               {t.fleetSectionTitle}
             </h2>
             <p className="text-slate-500 text-sm sm:text-base">
@@ -631,7 +631,7 @@ function HomeContent() {
               return (
                 <div 
                   key={idx}
-                  className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col group"
+                  className="bg-white rounded-[2rem] border border-transparent overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(37,99,235,0.1)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col group"
                 >
                   <div className="relative h-48 bg-slate-50/50 border-b border-slate-100 overflow-hidden">
                     <Image 
@@ -647,7 +647,7 @@ function HomeContent() {
                   </div>
                   <div className="p-6 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-display font-extrabold text-slate-800 text-lg mb-1 group-hover:text-primary-800 transition-colors">{vehicle.name}</h3>
+                      <h3 className="font-display font-black tracking-tight text-slate-800 text-lg mb-1 group-hover:text-primary-800 transition-colors">{vehicle.name}</h3>
                       <div className="inline-flex items-center gap-1 text-[10px] text-primary-800 font-extrabold bg-primary-50 px-2.5 py-1 rounded-lg mb-3 border border-primary-100/50">
                         {t.capacityLabel} {vCapacity}
                       </div>
@@ -670,7 +670,7 @@ function HomeContent() {
       </section>
 
       {/* 6. Service Areas Section */}
-      <section className="py-16 sm:py-24 bg-slate-50/50 border-y border-slate-200/60 relative overflow-hidden">
+      <section className="py-20 sm:py-32 bg-slate-50/50 border-y border-slate-200/60 relative overflow-hidden">
         {/* Decorative subtle background design elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary-100/10 rounded-full blur-[100px] pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent-500/5 rounded-full blur-[100px] pointer-events-none"></div>
@@ -686,7 +686,7 @@ function HomeContent() {
                   {t.networkTag}
                 </div>
                 
-                <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 mb-4 leading-tight">
+                <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 mb-4 leading-tight">
                   {lang === "hi" ? <>पूर्वांचल (<span className="text-accent-500">Eastern UP</span>) में एक्सप्रेस गाड़ियां</> : <>{t.networkTitle}</>}
                 </h2>
                 
@@ -761,7 +761,7 @@ function HomeContent() {
                       </div>
                       
                       <div className="mt-4">
-                        <span className={`block font-display font-extrabold text-base sm:text-lg leading-tight transition-colors ${
+                        <span className={`block font-display font-black tracking-tight text-base sm:text-lg leading-tight transition-colors ${
                           isVaranasi ? "text-white" : "text-slate-800 group-hover:text-primary-800"
                         }`}>
                           {aName}
@@ -783,11 +783,11 @@ function HomeContent() {
       </section>
 
       {/* 7. Inquiry Form & Booking Flow */}
-      <section id="inquiry" className="py-16 sm:py-24 bg-slate-50 border-b border-slate-100 scroll-mt-16 sm:scroll-mt-20">
+      <section id="inquiry" className="py-20 sm:py-32 bg-slate-50 border-b border-slate-100 scroll-mt-16 sm:scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-5 flex flex-col justify-center gap-6">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest text-center lg:text-left">{t.inquiryTag}</span>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 text-center lg:text-left">
+            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 text-center lg:text-left">
               {t.inquiryTitle}
             </h2>
             <p className="text-slate-600 text-sm sm:text-base text-center lg:text-left mb-4">
@@ -826,11 +826,11 @@ function HomeContent() {
       </section>
 
       {/* 8. Testimonials Section */}
-      <section className="py-16 sm:py-24 bg-white">
+      <section className="py-20 sm:py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.testiTag}</span>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
+            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
               {t.testiTitle}
             </h2>
             <p className="text-slate-500 text-sm sm:text-base">
@@ -880,11 +880,11 @@ function HomeContent() {
       </section>
 
       {/* 9. Contact & Maps Section */}
-      <section className="py-16 sm:py-24 bg-slate-50 border-t border-slate-100">
+      <section className="py-20 sm:py-32 bg-slate-50 border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="flex flex-col justify-center gap-6">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.contactTag}</span>
-            <h2 className="font-display font-extrabold text-3xl text-primary-800">
+            <h2 className="font-display font-black tracking-tight text-3xl text-primary-800">
               {t.contactTitle}
             </h2>
             <p className="text-slate-600 text-sm leading-relaxed">
