@@ -69,11 +69,11 @@ h1, h2, h3, h4, h5, h6 {
 /* Marquee Animation for Testimonials */
 @keyframes scroll {
   0% { transform: translateX(0); }
-  100% { transform: translateX(calc(-100% - 1.5rem)); }
+  100% { transform: translateX(calc(-50% - 0.75rem)); }
 }
 
 .animate-scroll {
-  animation: scroll 40s linear infinite;
+  animation: scroll 45s linear infinite;
   display: flex;
   width: max-content;
 }
