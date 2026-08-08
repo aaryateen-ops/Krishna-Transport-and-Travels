@@ -343,6 +343,7 @@ function HomeContent() {
                 alt="Krishna Transport Logo" 
                 fill 
                 unoptimized
+                priority={true}
                 className="object-cover scale-[1.4] origin-center"
               />
             </div>
@@ -553,6 +554,7 @@ function HomeContent() {
                     title="Krishna Transport Shifting & Cargo Service"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
+                    loading="lazy"
                     className="w-full h-full border-none object-cover pointer-events-auto rounded-3xl"
                   />
                </div>
