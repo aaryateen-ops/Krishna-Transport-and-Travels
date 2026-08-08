@@ -255,7 +255,13 @@ function HomeContent() {
       reelTag: "हमारा काम (Business Story)",
       reelTitle: "व्यापार के लिए",
       reelHighlight: "सबसे आसान और सुरक्षित",
-      reelDesc: "देखें कि व्यापारी और दुकानदार रोज़ाना ट्रांसपोर्ट की किन समस्याओं का सामना करते हैं, और कृष्णा ट्रांसपोर्ट कैसे उन्हें एक तेज़, सुरक्षित और भरोसेमंद सर्विस देता है। वीडियो प्ले करके हमारी कहानी जानें।"
+      reelDesc: "इस वीडियो में कृष्णा ट्रांसपोर्ट (Krishna Transport) की आसान और सुरक्षित लॉजिस्टिक्स सेवाओं के बारे में बताया गया है:",
+      reelPoints: [
+        { title: "किफायती दरें", text: "यह सर्विस पूरे बनारस शहर में कहीं भी मात्र ₹600 में माल की डिलीवरी कराने की सुविधा देती है।" },
+        { title: "विस्तृत क्षेत्र", text: "इनकी डिलीवरी और ट्रांसपोर्ट सुविधाएं बनारस के साथ-साथ पूरे पूर्वांचल क्षेत्र में उपलब्ध हैं।" },
+        { title: "24/7 उपलब्धता", text: "यह सेवा 24 घंटे और सातों दिन चालू रहती है। ग्राहक आधी रात को भी किसी भी आपातकालीन डिलीवरी या सर्विस के लिए इनसे संपर्क कर सकते हैं।" },
+        { title: "परेशानी का समाधान", text: "यह विशेष रूप से उन दुकानदारों के लिए एक बड़ा समाधान है जिन्हें समय पर गाड़ियां न मिलने या डिलीवरी रुकने जैसी दिक्कतों का सामना करना पड़ता है।" }
+      ],
     },
     en: {
       metaTitle: "Krishna Transport Varanasi",
@@ -339,7 +345,13 @@ function HomeContent() {
       reelTag: "Our Business Story",
       reelTitle: "The",
       reelHighlight: "Safest & Easiest Choice",
-      reelDesc: "Watch how businessmen face daily transport challenges and how Krishna Transport solves them with our fast, safe, and reliable logistics network. Play the video to learn more."
+      reelDesc: "This video explains Krishna Transport's easy and safe logistics services:",
+      reelPoints: [
+        { title: "Affordable Rates", text: "Delivery services anywhere across Varanasi city starting at just ₹600." },
+        { title: "Wide Coverage", text: "Transport and logistics support across Varanasi and the entire Purvanchal region." },
+        { title: "24/7 Availability", text: "We operate 24x7. Customers can contact us even at midnight for emergency deliveries." },
+        { title: "Hassle-Free Solution", text: "A massive relief for shopkeepers who struggle with delayed vehicles or stalled deliveries." }
+      ],
     }
   }[lang];
 
@@ -548,9 +560,19 @@ function HomeContent() {
                <h2 className="font-display font-black tracking-tight text-3xl sm:text-5xl text-primary-800 leading-tight">
                   {t.reelTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600">{t.reelHighlight}</span>
                </h2>
-               <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-lg mx-auto lg:mx-0">
-                  {t.reelDesc}
-               </p>
+               <div className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-lg mx-auto lg:mx-0 flex flex-col gap-4">
+                  <p>{t.reelDesc}</p>
+                  <ul className="flex flex-col gap-3 text-left">
+                    {t.reelPoints.map((point: any, i: number) => (
+                      <li key={i} className="flex gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-accent-500 shrink-0 mt-0.5" />
+                        <span>
+                          <strong className="text-primary-800">{point.title}:</strong> {point.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+               </div>
                <div className="mt-4 flex justify-center lg:justify-start">
                    <Link href="#booking" className="bg-primary-800 text-white font-extrabold px-8 py-4 rounded-full hover:bg-primary-900 transition-colors shadow-xl shadow-primary-900/20 text-sm tracking-wide">
                        {t.getQuoteBtn}
