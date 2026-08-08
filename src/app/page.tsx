@@ -524,22 +524,22 @@ function HomeContent() {
       </section>
 
       {/* 3.5. Reel Section (Business Story) */}
-      <section className="py-16 sm:py-24 bg-slate-950 text-white relative overflow-hidden border-t border-slate-900">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-900/20 to-transparent pointer-events-none" />
+      <section className="py-16 sm:py-24 bg-white relative overflow-hidden border-t border-slate-200/60">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-50/50 to-transparent pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-20 items-center">
             
             {/* Text side */}
             <div className="flex flex-col gap-6 text-center lg:text-left order-2 lg:order-1">
                <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.reelTag}</span>
-               <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-white leading-tight">
-                  {t.reelTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 to-yellow-500">{t.reelHighlight}</span>
+               <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-primary-800 leading-tight">
+                  {t.reelTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600">{t.reelHighlight}</span>
                </h2>
-               <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-lg mx-auto lg:mx-0">
+               <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-lg mx-auto lg:mx-0">
                   {t.reelDesc}
                </p>
                <div className="mt-4 flex justify-center lg:justify-start">
-                   <Link href="#booking" className="bg-white text-slate-950 font-extrabold px-8 py-4 rounded-full hover:bg-slate-200 transition-colors shadow-xl shadow-white/10 text-sm tracking-wide">
+                   <Link href="#booking" className="bg-primary-800 text-white font-extrabold px-8 py-4 rounded-full hover:bg-primary-900 transition-colors shadow-xl shadow-primary-900/20 text-sm tracking-wide">
                        {t.getQuoteBtn}
                    </Link>
                </div>
@@ -547,13 +547,13 @@ function HomeContent() {
 
             {/* Video side (Reel placed in a nice container) */}
             <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
-               <div className="relative w-full max-w-[320px] sm:max-w-[360px] aspect-[9/16] rounded-[2.5rem] overflow-hidden shadow-[0_0_60px_rgba(234,179,8,0.15)] border-[10px] border-slate-800 bg-black rotate-1 hover:rotate-0 transition-transform duration-500">
+               <div className="relative w-full max-w-[320px] sm:max-w-[360px] aspect-[9/16] rounded-[2.5rem] overflow-hidden shadow-2xl border-[10px] border-slate-100 bg-white rotate-1 hover:rotate-0 transition-transform duration-500 ring-1 ring-slate-200/50">
                   <iframe
                     src="https://www.youtube.com/embed/HQ4dFmRiSFU?autoplay=1&mute=1&loop=1&playlist=HQ4dFmRiSFU&controls=1&modestbranding=1&rel=0"
                     title="Krishna Transport Shifting & Cargo Service"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
-                    className="w-full h-full border-none object-cover pointer-events-auto"
+                    className="w-full h-full border-none object-cover pointer-events-auto rounded-3xl"
                   />
                </div>
             </div>
