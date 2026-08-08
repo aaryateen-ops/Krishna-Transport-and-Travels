@@ -239,7 +239,11 @@ function HomeContent() {
       hqLabel: "मुख्य कार्यालय:",
       portalLogin: "पोर्टल लॉगिन",
       trackBookingText: "ट्रैक बुकिंग",
-      callTextMobile: "फ़ोन पर बुकिंग (Call)"
+      callTextMobile: "फ़ोन पर बुकिंग (Call)",
+      reelTag: "हमारा काम (Business Story)",
+      reelTitle: "व्यापार के लिए",
+      reelHighlight: "सबसे आसान और सुरक्षित",
+      reelDesc: "देखें कि व्यापारी और दुकानदार रोज़ाना ट्रांसपोर्ट की किन समस्याओं का सामना करते हैं, और कृष्णा ट्रांसपोर्ट कैसे उन्हें एक तेज़, सुरक्षित और भरोसेमंद सर्विस देता है। वीडियो प्ले करके हमारी कहानी जानें।"
     },
     en: {
       metaTitle: "Krishna Transport Varanasi",
@@ -319,7 +323,11 @@ function HomeContent() {
       hqLabel: "Headquarters:",
       portalLogin: "Portal Login",
       trackBookingText: "Track Booking",
-      callTextMobile: "Call"
+      callTextMobile: "Call",
+      reelTag: "Our Business Story",
+      reelTitle: "The",
+      reelHighlight: "Safest & Easiest Choice",
+      reelDesc: "Watch how businessmen face daily transport challenges and how Krishna Transport solves them with our fast, safe, and reliable logistics network. Play the video to learn more."
     }
   }[lang];
 
@@ -446,15 +454,16 @@ function HomeContent() {
             </div>
           </div>
           
-          <div className="lg:col-span-5 relative h-72 sm:h-[420px] rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-black hover:shadow-primary-800/5 transition-all group">
-            <iframe
-              src="https://www.youtube.com/embed/HQ4dFmRiSFU?autoplay=1&mute=1&loop=1&playlist=HQ4dFmRiSFU&controls=1&modestbranding=1&rel=0"
-              title="Krishna Transport Shifting & Cargo Service"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="w-full h-full border-none object-cover"
+          <div className="lg:col-span-5 relative h-72 sm:h-[420px] rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-white hover:shadow-primary-800/5 transition-all group">
+            <Image 
+              src="/magic.png" 
+              alt="Krishna Transport Tata Magic Loader" 
+              fill 
+              className="object-cover bg-white group-hover:scale-105 transition-transform duration-700"
+              priority={true}
+              sizes="(max-width: 1024px) 100vw, 40vw"
             />
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent p-6 text-white z-20 pointer-events-none">
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent p-6 text-white z-20">
               <span className="text-xs font-extrabold uppercase tracking-wider text-accent-500">{t.fleetTitle}</span>
               <h3 className="text-lg font-display font-extrabold">{t.fleetSubtitle}</h3>
               <p className="text-xs text-slate-300">{t.fleetDesc}</p>
@@ -510,6 +519,44 @@ function HomeContent() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* 3.5. Reel Section (Business Story) */}
+      <section className="py-16 sm:py-24 bg-slate-950 text-white relative overflow-hidden border-t border-slate-900">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-900/20 to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-20 items-center">
+            
+            {/* Text side */}
+            <div className="flex flex-col gap-6 text-center lg:text-left order-2 lg:order-1">
+               <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.reelTag}</span>
+               <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-white leading-tight">
+                  {t.reelTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 to-yellow-500">{t.reelHighlight}</span>
+               </h2>
+               <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-lg mx-auto lg:mx-0">
+                  {t.reelDesc}
+               </p>
+               <div className="mt-4 flex justify-center lg:justify-start">
+                   <Link href="#booking" className="bg-white text-slate-950 font-extrabold px-8 py-4 rounded-full hover:bg-slate-200 transition-colors shadow-xl shadow-white/10 text-sm tracking-wide">
+                       {t.getQuoteBtn}
+                   </Link>
+               </div>
+            </div>
+
+            {/* Video side (Reel placed in a nice container) */}
+            <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
+               <div className="relative w-full max-w-[320px] sm:max-w-[360px] aspect-[9/16] rounded-[2.5rem] overflow-hidden shadow-[0_0_60px_rgba(234,179,8,0.15)] border-[10px] border-slate-800 bg-black rotate-1 hover:rotate-0 transition-transform duration-500">
+                  <iframe
+                    src="https://www.youtube.com/embed/HQ4dFmRiSFU?autoplay=1&mute=1&loop=1&playlist=HQ4dFmRiSFU&controls=1&modestbranding=1&rel=0"
+                    title="Krishna Transport Shifting & Cargo Service"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full border-none object-cover pointer-events-auto"
+                  />
+               </div>
+            </div>
           </div>
         </div>
       </section>
