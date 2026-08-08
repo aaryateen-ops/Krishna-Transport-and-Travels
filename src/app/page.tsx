@@ -155,6 +155,18 @@ const areasMap = [
   { hi: "मऊ", en: "Mau" }
 ];
 
+const localTestimonials = [
+  { name: "Amit Bhai", role: "Shopkeeper, Lanka", text: "Bhaiya ki service ek no. hai, saman time pe phucha diye the. rate v theek laga." },
+  { name: "Rakesh Yadav", role: "Household Shifting, Pandeypur", text: "Pehli baar book kiye the hum, gadi wala bhut bdiya tha sara saman khud hi load krwa diya.. badhiya transport." },
+  { name: "Neha Singh", role: "Customer, Mirzapur", text: "bhot badhiya, saman surakshit aya mirzapur tak. agli baar yhi se book karungi." },
+  { name: "Shivam", role: "Student, Sigra", text: "Bhai ekdum mast service. rate thoda kam kr sakte the but overall thik h. driver acha tha." },
+  { name: "Manoj", role: "Hostel Shifting, BHU", text: "Bhaiya ji ka transport acha hai, tata magic lagwaye the shifting me.. ekdum aaram se ho gya." },
+  { name: "Rahul Tripathi", role: "Business Owner, Ramnagar", text: "Gajab ki service rhi yaar inki. Varanasi me or kisi ka itna badhiya response ni h." },
+  { name: "Virendra", role: "Wholesaler, Azamgarh", text: "Humko azamgarh mal bhejna hota hai har hafte. ekdum fix gadi milti hai, rate me bhi compromise ho jata h." },
+  { name: "Anand", role: "Furniture Delivery, Mughalsarai", text: "Bohot bdiya service hai krishna walo ki. koi jhanjhat nai, saman ekdum sahi salamat pahucha dia." },
+  { name: "Priya", role: "Boutique Owner, Mahmoorganj", text: "Maine apne boutique ka saman mangwaya tha. bhaiya logo ne bht carefully saman utara.. thank u." }
+];
+
 function HomeContent() {
   const searchParams = useSearchParams();
   const initialService = searchParams.get("service") || "";
@@ -838,42 +850,38 @@ function HomeContent() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-7 rounded-3xl bg-slate-50/40 border border-slate-200/50 flex flex-col justify-between hover:shadow-md hover:border-slate-300/40 transition-all duration-300 relative min-h-[220px] group">
-              {/* Giant quotation mark in background */}
-              <span className="absolute top-2 right-4 text-7xl text-slate-200/50 font-serif leading-none select-none group-hover:text-primary-100 transition-colors pointer-events-none">&ldquo;</span>
-              
-              <p className="text-slate-600 text-xs sm:text-sm italic leading-relaxed mb-6 relative z-10">
-                &ldquo;{t.testi1Text}&rdquo;
-              </p>
-              <div>
-                <span className="block font-bold text-slate-800 text-sm">{t.testi1Name}</span>
-                <span className="text-xs text-primary-600 font-bold">{t.testi1Role}</span>
-              </div>
-            </div>
-
-            <div className="p-7 rounded-3xl bg-slate-50/40 border border-slate-200/50 flex flex-col justify-between hover:shadow-md hover:border-slate-300/40 transition-all duration-300 relative min-h-[220px] group">
-              <span className="absolute top-2 right-4 text-7xl text-slate-200/50 font-serif leading-none select-none group-hover:text-primary-100 transition-colors pointer-events-none">&ldquo;</span>
-              
-              <p className="text-slate-600 text-xs sm:text-sm italic leading-relaxed mb-6 relative z-10">
-                &ldquo;{t.testi2Text}&rdquo;
-              </p>
-              <div>
-                <span className="block font-bold text-slate-800 text-sm">{t.testi2Name}</span>
-                <span className="text-xs text-primary-600 font-bold">{t.testi2Role}</span>
-              </div>
-            </div>
-
-            <div className="p-7 rounded-3xl bg-slate-50/40 border border-slate-200/50 flex flex-col justify-between hover:shadow-md hover:border-slate-300/40 transition-all duration-300 relative min-h-[220px] group">
-              <span className="absolute top-2 right-4 text-7xl text-slate-200/50 font-serif leading-none select-none group-hover:text-primary-100 transition-colors pointer-events-none">&ldquo;</span>
-              
-              <p className="text-slate-600 text-xs sm:text-sm italic leading-relaxed mb-6 relative z-10">
-                &ldquo;{t.testi3Text}&rdquo;
-              </p>
-              <div>
-                <span className="block font-bold text-slate-800 text-sm">{t.testi3Name}</span>
-                <span className="text-xs text-primary-600 font-bold">{t.testi3Role}</span>
-              </div>
+          <div className="relative overflow-hidden flex whitespace-nowrap mt-4 -mx-4 sm:mx-0 px-4 sm:px-0">
+            <div className="absolute left-0 top-0 w-24 h-full bg-gradient-to-r from-white to-transparent z-10 pointer-events-none hidden sm:block"></div>
+            <div className="absolute right-0 top-0 w-24 h-full bg-gradient-to-l from-white to-transparent z-10 pointer-events-none hidden sm:block"></div>
+            
+            <div className="animate-scroll flex gap-6 hover:animation-play-state-paused cursor-grab active:cursor-grabbing w-max">
+              {localTestimonials.map((t, idx) => (
+                <div key={idx} className="w-[320px] sm:w-[380px] shrink-0 whitespace-normal p-8 rounded-[2rem] bg-slate-50/40 border border-slate-200/50 flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(37,99,235,0.1)] hover:-translate-y-1 transition-all duration-300 relative min-h-[240px] group">
+                  <span className="absolute top-2 right-4 text-7xl text-slate-200/50 font-serif leading-none select-none group-hover:text-primary-100 transition-colors pointer-events-none">&ldquo;</span>
+                  
+                  <p className="text-slate-600 text-sm sm:text-base italic leading-relaxed mb-6 relative z-10">
+                    &ldquo;{t.text}&rdquo;
+                  </p>
+                  <div>
+                    <span className="block font-bold text-slate-800 text-sm">{t.name}</span>
+                    <span className="text-xs text-primary-600 font-bold">{t.role}</span>
+                  </div>
+                </div>
+              ))}
+              {/* Duplicate array for seamless infinite scroll */}
+              {localTestimonials.map((t, idx) => (
+                <div key={`dup-${idx}`} className="w-[320px] sm:w-[380px] shrink-0 whitespace-normal p-8 rounded-[2rem] bg-slate-50/40 border border-slate-200/50 flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(37,99,235,0.1)] hover:-translate-y-1 transition-all duration-300 relative min-h-[240px] group">
+                  <span className="absolute top-2 right-4 text-7xl text-slate-200/50 font-serif leading-none select-none group-hover:text-primary-100 transition-colors pointer-events-none">&ldquo;</span>
+                  
+                  <p className="text-slate-600 text-sm sm:text-base italic leading-relaxed mb-6 relative z-10">
+                    &ldquo;{t.text}&rdquo;
+                  </p>
+                  <div>
+                    <span className="block font-bold text-slate-800 text-sm">{t.name}</span>
+                    <span className="text-xs text-primary-600 font-bold">{t.role}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
