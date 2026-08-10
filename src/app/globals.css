@@ -17,6 +17,21 @@
   --color-accent-500: #f97316;
   --color-accent-600: #ea580c;
   --color-accent-700: #c2410c;
+
+  /* Custom Animations */
+  --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 12px rgba(249, 115, 22, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+    }
+  }
 }
 
 :root {

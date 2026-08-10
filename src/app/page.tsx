@@ -1074,9 +1074,9 @@ function HomeContent() {
       <div className="fixed bottom-6 right-6 z-40 sm:hidden">
         <a 
           href="tel:7080360217"
-          className="flex items-center gap-2 bg-primary-800 hover:bg-primary-900 text-white font-black text-xs px-5 py-3.5 rounded-full shadow-2xl animate-bounce border-2 border-white"
+          className="flex items-center gap-2 bg-gradient-to-r from-primary-800 to-primary-900 hover:from-primary-700 hover:to-primary-800 text-white font-extrabold text-xs px-5 py-4 rounded-full shadow-2xl border border-white/30 transition-all duration-300 active:scale-95 animate-pulse-ring"
         >
-          <Phone className="w-4 h-4 text-accent-500 fill-accent-500" />
+          <Phone className="w-4 h-4 text-accent-500 fill-accent-500 animate-pulse" />
           <span>{lang === "hi" ? "फ़ोन पर बुकिंग (Call)" : "Book on Call"}</span>
         </a>
       </div>
