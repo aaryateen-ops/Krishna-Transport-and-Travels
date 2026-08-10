@@ -174,7 +174,7 @@ export default function InquiryForm({ initialService = "", lang = "hi" }: Inquir
       pickupLabel: "सामान कहाँ से उठाना है (पिकअप) *",
       pickupPlaceholder: "जैसे: सिगरा, Varanasi",
       dropLabel: "सामान कहाँ पहुँचाना है (ड्रॉप) *",
-      dropPlaceholder: "जैसे: सालरपुर, Varanasi या आज़मगढ़",
+      dropPlaceholder: "जैसे: सलारपुर, Varanasi या आज़मगढ़",
       cargoDetails: "📦 गाड़ी और सामान की जानकारी",
       serviceType: "कैसी गाड़ी/सर्विस चाहिए *",
       servicePlaceholder: "सर्विस का प्रकार चुनें",
