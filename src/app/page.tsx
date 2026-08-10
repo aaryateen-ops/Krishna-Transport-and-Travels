@@ -439,9 +439,9 @@ function HomeContent() {
               <CheckCircle2 className="w-4 h-4 text-accent-500 animate-pulse" />
               {t.metaSubtitle}
             </div>
-            <h1 className="font-display font-black tracking-tight text-4xl sm:text-5xl lg:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 leading-[1.1]">
+            <h1 className="font-display font-black tracking-tight text-4xl sm:text-5xl lg:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 leading-[1.1] py-2">
               {t.heroHeading} <br />
-              <span className="text-accent-500">{t.heroHeadingHighlight}</span>
+              <span className="text-accent-500 py-1">{t.heroHeadingHighlight}</span>
             </h1>
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto lg:mx-0">
               {t.heroDesc}
@@ -502,7 +502,7 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.servicesTag}</span>
-            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
+            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 py-2">
               {t.servicesTitle}
             </h2>
             <p className="text-slate-500 text-sm sm:text-base">
@@ -557,8 +557,8 @@ function HomeContent() {
             {/* Text side */}
             <div className="flex flex-col gap-6 text-center lg:text-left order-2 lg:order-1">
                <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.reelTag}</span>
-               <h2 className="font-display font-black tracking-tight text-3xl sm:text-5xl text-primary-800 leading-tight">
-                  {t.reelTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600">{t.reelHighlight}</span>
+               <h2 className="font-display font-black tracking-tight text-3xl sm:text-5xl text-primary-800 leading-tight py-2">
+                  {t.reelTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600 py-1">{t.reelHighlight}</span>
                </h2>
                <div className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-lg mx-auto lg:mx-0 flex flex-col gap-4">
                   <p>{t.reelDesc}</p>
@@ -603,7 +603,7 @@ function HomeContent() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 flex flex-col gap-6 text-center lg:text-left">
               <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.whyTag}</span>
-              <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
+              <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 py-2">
                 {t.whyTitle}
               </h2>
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
@@ -648,7 +648,7 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.fleetTag}</span>
-            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
+            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 py-2">
               {t.fleetSectionTitle}
             </h2>
             <p className="text-slate-500 text-sm sm:text-base">
@@ -720,8 +720,8 @@ function HomeContent() {
                   {t.networkTag}
                 </div>
                 
-                <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 mb-4 leading-tight">
-                  {lang === "hi" ? <>पूर्वांचल (<span className="text-accent-500">Eastern UP</span>) में एक्सप्रेस गाड़ियां</> : <>{t.networkTitle}</>}
+                <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 mb-4 leading-tight py-2">
+                  {lang === "hi" ? <>पूर्वांचल (<span className="text-accent-500 py-1">Eastern UP</span>) में एक्सप्रेस गाड़ियां</> : <>{t.networkTitle}</>}
                 </h2>
                 
                 <p className="text-slate-500 text-sm leading-relaxed mb-6">
@@ -821,7 +821,7 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-5 flex flex-col justify-center gap-6">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest text-center lg:text-left">{t.inquiryTag}</span>
-            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 text-center lg:text-left">
+            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 text-center lg:text-left py-2">
               {t.inquiryTitle}
             </h2>
             <p className="text-slate-600 text-sm sm:text-base text-center lg:text-left mb-4">
@@ -864,7 +864,7 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.testiTag}</span>
-            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600">
+            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 py-2">
               {t.testiTitle}
             </h2>
             <p className="text-slate-500 text-sm sm:text-base">
