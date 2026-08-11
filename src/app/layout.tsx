@@ -4,13 +4,13 @@ import Script from "next/script";
 import "./globals.css";
 
 const outfit = Outfit({
-  subsets: ["latin"],
+  subsets: ["latin", "devanagari"],
   variable: "--font-outfit",
   weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 const inter = Inter({
-  subsets: ["latin"],
+  subsets: ["latin", "devanagari"],
   variable: "--font-inter",
   weight: ["300", "400", "500", "600", "700"],
 });
