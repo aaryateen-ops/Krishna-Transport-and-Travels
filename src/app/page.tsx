@@ -176,8 +176,8 @@ function HomeContent() {
     hi: {
       metaTitle: "कृष्णा ट्रांसपोर्ट वाराणसी",
       metaSubtitle: "वाराणसी में भरोसेमंद लोकल ट्रांसपोर्ट",
-      heroHeading: "तेज़, सुरक्षित और भरोसेमंद",
-      heroHeadingHighlight: "टेम्पो और शिफ्टिंग सर्विस",
+      heroHeading: "वाराणसी में सबसे तेज़ & भरोसेमंद",
+      heroHeadingHighlight: "टेम्पो, छोटा हाथी & शिफ्टिंग सर्विस",
       heroDesc: "घर का सामान, दुकान का फर्नीचर या कोई भी पार्सल भेजना हो? वाराणसी और आस-पास के जिलों में टेम्पो या छोटा हाथी बुक करें सिर्फ ₹600 से शुरू। रोहित भैया से सीधे संपर्क करें।",
       getQuoteBtn: "गाड़ी बुक करें (Book a Ride)",
       callBtn: "फ़ोन करें: 7080360217",
@@ -266,8 +266,8 @@ function HomeContent() {
     en: {
       metaTitle: "Krishna Transport Varanasi",
       metaSubtitle: "Trusted Local Transport in Varanasi",
-      heroHeading: "Fast, Safe & Reliable",
-      heroHeadingHighlight: "Shifting & Tempo Services",
+      heroHeading: "Best Local Transport in Varanasi",
+      heroHeadingHighlight: "Tempo, Mini Truck & House Shifting",
       heroDesc: "Need to move household goods, office furniture, or commercial parcels? Book our local tempos and mini trucks starting from just ₹600. Professional service in Varanasi and surrounding districts.",
       getQuoteBtn: "Book a Ride Now",
       callBtn: "Call: 7080360217",
@@ -364,7 +364,7 @@ function HomeContent() {
             <div className="relative w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300">
               <Image 
                 src="/logo.png" 
-                alt="Krishna Transport Logo" 
+                alt="कृष्णा ट्रांसपोर्ट वाराणसी - टेम्पो व घर शिफ्टिंग सर्विस लोगो" 
                 fill 
                 unoptimized
                 priority={true}
@@ -482,7 +482,7 @@ function HomeContent() {
           <div className="lg:col-span-5 relative h-72 sm:h-[420px] rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-white hover:shadow-primary-800/5 transition-all group">
             <Image 
               src="/magic.png" 
-              alt="Krishna Transport Tata Magic Loader" 
+              alt="टाटा मैजिक छोटा हाथी टेम्पो बुकिंग वाराणसी - कृष्णा ट्रांसपोर्ट" 
               fill 
               className="object-cover bg-white group-hover:scale-105 transition-transform duration-700"
               priority={true}
@@ -670,7 +670,7 @@ function HomeContent() {
                   <div className="relative h-48 bg-slate-50/50 border-b border-slate-100 overflow-hidden">
                     <Image 
                       src={vehicle.image} 
-                      alt={vehicle.name} 
+                      alt={`${vehicle.name} - टेम्पो व माल ट्रांसपोर्ट वाराणसी`} 
                       fill 
                       className="object-contain p-4 group-hover:scale-[1.03] transition-transform duration-500"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -974,7 +974,7 @@ function HomeContent() {
               <div className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border border-slate-200 shrink-0">
                 <Image 
                   src="/logo.png" 
-                  alt="Krishna Transport Logo" 
+                  alt="कृष्णा ट्रांसपोर्ट वाराणसी - विश्वसनीय ट्रांसपोर्ट एवं शिफ्टिंग सर्विस" 
                   fill 
                   unoptimized
                   className="object-cover scale-[1.4] origin-center"
