@@ -16,9 +16,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://krishnatransports.com"),
+  metadataBase: new URL("https://www.krishnatransports.com"),
   alternates: {
-    canonical: "https://krishnatransports.com",
+    canonical: "https://www.krishnatransports.com",
   },
   title: {
     default: "कृष्णा ट्रांसपोर्ट वाराणसी | टेम्पो बुकिंग, छोटा हाथी & घर शिफ्टिंग",
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "कृष्णा ट्रांसपोर्ट वाराणसी | टेम्पो बुकिंग, छोटा हाथी & घर शिफ्टिंग",
     description: "वाराणसी और आस-पास के जिलों में घर का सामान, दुकान का फर्नीचर या कोई भी पार्सल भेजें। टेम्पो या छोटा हाथी ऑनलाइन बुक करें और लाइव ट्रैक करें। किराया सिर्फ ₹600 से शुरू।",
-    url: "https://krishnatransports.com",
+    url: "https://www.krishnatransports.com",
     siteName: "कृष्णा ट्रांसपोर्ट",
     locale: "hi_IN",
     type: "website",
@@ -99,16 +99,16 @@ const jsonLdSchema = {
   "@graph": [
     {
       "@type": ["LocalBusiness", "MovingCompany"],
-      "@id": "https://krishnatransports.com/#business",
+      "@id": "https://www.krishnatransports.com/#business",
       "name": "कृष्णा ट्रांसपोर्ट वाराणसी (Krishna Transport and Travels)",
       "alternateName": [
         "Krishna Transport Varanasi",
         "Krishna Travels Salarpur",
         "Krishna Transport & Travel Management"
       ],
-      "url": "https://krishnatransports.com",
-      "logo": "https://krishnatransports.com/logo.png",
-      "image": "https://krishnatransports.com/og_banner.png",
+      "url": "https://www.krishnatransports.com",
+      "logo": "https://www.krishnatransports.com/logo.png",
+      "image": "https://www.krishnatransports.com/og_banner.png",
       "telephone": "+917080360217",
       "priceRange": "₹600 - ₹5000",
       "currenciesAccepted": "INR",
@@ -167,12 +167,12 @@ const jsonLdSchema = {
     },
     {
       "@type": "WebSite",
-      "@id": "https://krishnatransports.com/#website",
-      "url": "https://krishnatransports.com",
+      "@id": "https://www.krishnatransports.com/#website",
+      "url": "https://www.krishnatransports.com",
       "name": "कृष्णा ट्रांसपोर्ट वाराणसी",
       "description": "वाराणसी और पूर्वांचल में ऑनलाइन टेम्पो बुकिंग & शिफ्टिंग सर्विस",
       "publisher": {
-        "@id": "https://krishnatransports.com/#business"
+        "@id": "https://www.krishnatransports.com/#business"
       },
       "inLanguage": "hi"
     }
