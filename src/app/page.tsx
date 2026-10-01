@@ -6,6 +6,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import InquiryForm from "@/components/InquiryForm";
 import HeaderAuth from "@/components/HeaderAuth";
+import FareCalculatorWidget from "@/components/FareCalculatorWidget";
+import FleetSection from "@/components/FleetSection";
+import RouteMatrixSection from "@/components/RouteMatrixSection";
+import ServicesSection from "@/components/ServicesSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
 import { 
   Truck, 
   Package, 
@@ -153,18 +158,6 @@ const areasMap = [
   { hi: "बलिया", en: "Ballia" },
   { hi: "जौनपुर", en: "Jaunpur" },
   { hi: "मऊ", en: "Mau" }
-];
-
-const localTestimonials = [
-  { name: "Amit Bhai", role: "Shopkeeper, Lanka", text: "Bhaiya ki service ek no. hai, saman time pe phucha diye the. rate v theek laga." },
-  { name: "Rakesh Yadav", role: "Household Shifting, Pandeypur", text: "Pehli baar book kiye the hum, gadi wala bhut bdiya tha sara saman khud hi load krwa diya.. badhiya transport." },
-  { name: "Neha Singh", role: "Customer, Mirzapur", text: "bhot badhiya, saman surakshit aya mirzapur tak. agli baar yhi se book karungi." },
-  { name: "Shivam", role: "Student, Sigra", text: "Bhai ekdum mast service. rate thoda kam kr sakte the but overall thik h. driver acha tha." },
-  { name: "Manoj", role: "Hostel Shifting, BHU", text: "Bhaiya ji ka transport acha hai, tata magic lagwaye the shifting me.. ekdum aaram se ho gya." },
-  { name: "Rahul Tripathi", role: "Business Owner, Ramnagar", text: "Gajab ki service rhi yaar inki. Varanasi me or kisi ka itna badhiya response ni h." },
-  { name: "Virendra", role: "Wholesaler, Azamgarh", text: "Humko azamgarh mal bhejna hota hai har hafte. ekdum fix gadi milti hai, rate me bhi compromise ho jata h." },
-  { name: "Anand", role: "Furniture Delivery, Mughalsarai", text: "Bohot bdiya service hai krishna walo ki. koi jhanjhat nai, saman ekdum sahi salamat pahucha dia." },
-  { name: "Priya", role: "Boutique Owner, Mahmoorganj", text: "Maine apne boutique ka saman mangwaya tha. bhaiya logo ne bht carefully saman utara.. thank u." }
 ];
 
 function HomeContent() {
@@ -357,6 +350,31 @@ function HomeContent() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* 0. Live Dispatch Command Bar */}
+      <aside aria-label="Live Dispatch Status" className="bg-primary-950 text-slate-200 text-xs border-b border-primary-900/60 px-4 py-2 print:hidden">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-bold text-accent-400 tracking-wider uppercase text-[10px] sm:text-[11px]">
+              {lang === "hi" ? "लाइव डिस्पैच:" : "LIVE FLEET:"}
+            </span>
+            <span className="text-slate-200 font-medium">
+              {lang === "hi" 
+                ? "6 गाड़ियां सलारपुर व लंका हब पर तैयार • 15 मिनट में पिकअप" 
+                : "6 vehicles active across Varanasi hubs • 15-min dispatch"}
+            </span>
+          </div>
+          <div className="hidden md:flex items-center gap-3 text-slate-300 text-[11px] font-medium">
+            <span>{lang === "hi" ? "सीधा संपर्क: 7080360217" : "Direct Hotline: 7080360217"}</span>
+            <span className="text-slate-600">•</span>
+            <span className="text-emerald-400 font-bold">{lang === "hi" ? "24/7 चालू" : "24/7 Active"}</span>
+          </div>
+        </div>
+      </aside>
+
       {/* 1. Header & Navigation */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200/50 shadow-sm print:hidden transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -479,74 +497,14 @@ function HomeContent() {
             </div>
           </div>
           
-          <div className="lg:col-span-5 relative h-72 sm:h-[420px] rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-white hover:shadow-primary-800/5 transition-all group">
-            <Image 
-              src="/magic.png" 
-              alt="टाटा मैजिक छोटा हाथी टेम्पो बुकिंग वाराणसी - कृष्णा ट्रांसपोर्ट" 
-              fill 
-              className="object-cover bg-white group-hover:scale-105 transition-transform duration-700"
-              priority={true}
-              sizes="(max-width: 1024px) 100vw, 40vw"
-            />
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent p-6 text-white z-20">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-accent-500">{t.fleetTitle}</span>
-              <h3 className="text-lg font-display font-black tracking-tight">{t.fleetSubtitle}</h3>
-              <p className="text-xs text-slate-300">{t.fleetDesc}</p>
-            </div>
+          <div className="lg:col-span-5 w-full flex justify-center">
+            <FareCalculatorWidget lang={lang} />
           </div>
         </div>
       </section>
 
       {/* 3. Services Section */}
-      <section id="services" className="py-20 sm:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
-            <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.servicesTag}</span>
-            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 py-2">
-              {t.servicesTitle}
-            </h2>
-            <p className="text-slate-500 text-sm sm:text-base">
-              {t.servicesDesc}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service, idx) => {
-              const IconComp = service.icon;
-              const sName = service.name[lang];
-              const sDesc = service.description[lang];
-              
-              return (
-                <div 
-                  key={idx}
-                  className="group p-10 rounded-[2.5rem] bg-white border border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(37,99,235,0.12)] hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between min-h-[250px] relative overflow-hidden"
-                >
-                  {/* Hover Accent Top Line */}
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary-800/0 via-primary-800/20 to-primary-800/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  
-                  <div>
-                    <div className="w-12 h-12 bg-primary-50 text-primary-800 rounded-xl flex items-center justify-center group-hover:bg-primary-800 group-hover:text-white transition-all duration-350 mb-6 shrink-0">
-                      <IconComp className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-lg font-display font-black tracking-tight text-slate-800 mb-2 group-hover:text-primary-800 transition-colors">
-                      {sName}
-                    </h3>
-                    <p className="text-slate-500 text-xs sm:text-sm leading-relaxed mb-6">
-                      {sDesc}
-                    </p>
-                  </div>
-                  <Link 
-                    href={`/#inquiry?service=${encodeURIComponent(service.name.en)}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-accent-600 group-hover:text-accent-700 transition-colors uppercase tracking-wider"
-                  >
-                    {t.selectBook} <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      <ServicesSection lang={lang} />
 
       {/* 3.5. Reel Section (Business Story) */}
       <section className="py-20 sm:py-32 bg-white relative overflow-hidden border-t border-slate-200/60">
@@ -643,178 +601,11 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* 5. Vehicle Fleet Section */}
-      <section id="fleet" className="py-20 sm:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
-            <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.fleetTag}</span>
-            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 py-2">
-              {t.fleetSectionTitle}
-            </h2>
-            <p className="text-slate-500 text-sm sm:text-base">
-              {t.fleetSectionDesc}
-            </p>
-          </div>
+      {/* 5. Modern Vehicle Fleet Section */}
+      <FleetSection lang={lang} />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {fleet.map((vehicle, idx) => {
-              const vCapacity = vehicle.capacity[lang];
-              const vUsage = vehicle.usage[lang];
-              const vIcon = vehicle.icon[lang];
-
-              return (
-                <div 
-                  key={idx}
-                  className="bg-white rounded-[2rem] border border-transparent overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(37,99,235,0.1)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col group"
-                >
-                  <div className="relative h-48 bg-slate-50/50 border-b border-slate-100 overflow-hidden">
-                    <Image 
-                      src={vehicle.image} 
-                      alt={`${vehicle.name} - टेम्पो व माल ट्रांसपोर्ट वाराणसी`} 
-                      fill 
-                      className="object-contain p-4 group-hover:scale-[1.03] transition-transform duration-500"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    />
-                    <span className="absolute top-3 left-3 bg-primary-800 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
-                      {vIcon}
-                    </span>
-                  </div>
-                  <div className="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-display font-black tracking-tight text-slate-800 text-lg mb-1 group-hover:text-primary-800 transition-colors">{vehicle.name}</h3>
-                      <div className="inline-flex items-center gap-1 text-[10px] text-primary-800 font-extrabold bg-primary-50 px-2.5 py-1 rounded-lg mb-3 border border-primary-100/50">
-                        {t.capacityLabel} {vCapacity}
-                      </div>
-                      <p className="text-slate-500 text-xs leading-relaxed mb-6">
-                        {vUsage}
-                      </p>
-                    </div>
-                    <Link 
-                      href="#inquiry" 
-                      className="block text-center w-full py-3 bg-slate-50 border border-slate-200/60 hover:bg-primary-800 hover:text-white hover:border-primary-800 text-slate-700 font-bold text-xs rounded-xl uppercase tracking-wider transition-all cursor-pointer"
-                    >
-                      {t.selectVehicleBtn}
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 6. Service Areas Section */}
-      <section className="py-20 sm:py-32 bg-slate-50/50 border-y border-slate-200/60 relative overflow-hidden">
-        {/* Decorative subtle background design elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary-100/10 rounded-full blur-[100px] pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent-500/5 rounded-full blur-[100px] pointer-events-none"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
-            
-            {/* Left Content Card - Network Info */}
-            <div className="lg:col-span-5 flex flex-col justify-between bg-white border border-slate-200/60 p-8 rounded-3xl shadow-sm relative overflow-hidden">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-50 border border-primary-100 text-primary-800 text-[10px] font-bold uppercase tracking-wider rounded-full mb-6">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary-600 animate-pulse"></span>
-                  {t.networkTag}
-                </div>
-                
-                <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 mb-4 leading-tight py-2">
-                  {lang === "hi" ? <>पूर्वांचल (<span className="text-accent-500 py-1">Eastern UP</span>) में एक्सप्रेस गाड़ियां</> : <>{t.networkTitle}</>}
-                </h2>
-                
-                <p className="text-slate-500 text-sm leading-relaxed mb-6">
-                  {t.networkDesc}
-                </p>
-                
-                {/* Network Stats / Features */}
-                <div className="flex flex-col gap-4">
-                  <div className="flex gap-4 items-start">
-                    <div className="w-9 h-9 rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center text-primary-700 shrink-0">
-                      <Truck className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-800 text-sm">{t.sameDayTitle}</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{t.sameDayDesc}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 items-start">
-                    <div className="w-9 h-9 rounded-xl bg-accent-50 border border-accent-100 flex items-center justify-center text-accent-600 shrink-0">
-                      <Navigation className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-800 text-sm">{t.liveStatusTitle}</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{t.liveStatusDesc}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Popular Routes Ticker */}
-              <div className="border-t border-slate-100 pt-6 mt-8">
-                <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-3">{t.popularRoutes}</span>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <span className="px-2.5 py-1 bg-slate-50 border border-slate-200/60 rounded-xl text-slate-600 font-bold">Varanasi ⇆ Azamgarh</span>
-                  <span className="px-2.5 py-1 bg-slate-50 border border-slate-200/60 rounded-xl text-slate-600 font-bold">Varanasi ⇆ Mirzapur</span>
-                  <span className="px-2.5 py-1 bg-slate-50 border border-slate-200/60 rounded-xl text-slate-600 font-bold">Varanasi ⇆ Bhadohi</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Right Column - Areas Grid */}
-            <div className="lg:col-span-7 flex flex-col justify-center">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-                {areasMap.map((area, idx) => {
-                  const isVaranasi = area.en === "Varanasi";
-                  const aName = area[lang];
-                  
-                  return (
-                    <div 
-                      key={idx} 
-                      className={`relative overflow-hidden p-5 rounded-2xl transition-all duration-300 group flex flex-col justify-between min-h-[120px] ${
-                        isVaranasi 
-                          ? "bg-primary-800 text-white shadow-md hover:bg-primary-900 shadow-primary-800/10 col-span-2 sm:col-span-1 hover:-translate-y-0.5 hover:shadow-lg" 
-                          : "bg-white border border-slate-200/80 hover:border-primary-600/50 hover:bg-white hover:shadow-md hover:-translate-y-0.5"
-                      }`}
-                    >
-                      {/* Gradient Hover Effect */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-primary-600/0 via-primary-600/0 to-primary-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                      
-                      <div className="flex justify-between items-start">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          isVaranasi ? "bg-white/10 text-white" : "bg-slate-50 text-slate-400 group-hover:text-primary-800 group-hover:bg-primary-50 transition-colors"
-                        }`}>
-                          <MapPinIcon className="w-4 h-4 transition-transform group-hover:scale-110" />
-                        </div>
-                        {isVaranasi && (
-                          <span className="text-[8px] font-black uppercase tracking-wider bg-accent-500 text-white px-2 py-0.5 rounded-full animate-pulse">
-                            {t.hqHub}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="mt-4">
-                        <span className={`block font-display font-black tracking-tight text-base sm:text-lg leading-tight transition-colors ${
-                          isVaranasi ? "text-white" : "text-slate-800 group-hover:text-primary-800"
-                        }`}>
-                          {aName}
-                        </span>
-                        <span className={`block text-[10px] mt-0.5 font-medium ${
-                          isVaranasi ? "text-primary-100" : "text-slate-400"
-                        }`}>
-                          {isVaranasi ? t.centralOffice : t.expressConn}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            
-          </div>
-        </div>
-      </section>
+      {/* 6. Interactive Route & Logistics Matrix Section */}
+      <RouteMatrixSection lang={lang} />
 
       {/* 7. Inquiry Form & Booking Flow */}
       <section id="inquiry" className="py-20 sm:py-32 bg-slate-50 border-b border-slate-100 scroll-mt-16 sm:scroll-mt-20">
@@ -860,54 +651,7 @@ function HomeContent() {
       </section>
 
       {/* 8. Testimonials Section */}
-      <section className="py-20 sm:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col gap-3">
-            <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.testiTag}</span>
-            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 py-2">
-              {t.testiTitle}
-            </h2>
-            <p className="text-slate-500 text-sm sm:text-base">
-              {t.testiDesc}
-            </p>
-          </div>
-
-          <div className="relative overflow-hidden flex whitespace-nowrap mt-4 -mx-4 sm:mx-0 px-4 sm:px-0">
-            <div className="absolute left-0 top-0 w-24 h-full bg-gradient-to-r from-white to-transparent z-10 pointer-events-none hidden sm:block"></div>
-            <div className="absolute right-0 top-0 w-24 h-full bg-gradient-to-l from-white to-transparent z-10 pointer-events-none hidden sm:block"></div>
-            
-            <div className="animate-scroll flex gap-6 hover:animation-play-state-paused cursor-grab active:cursor-grabbing w-max">
-              {localTestimonials.map((t, idx) => (
-                <div key={idx} className="w-[320px] sm:w-[380px] shrink-0 whitespace-normal p-8 rounded-[2rem] bg-slate-50/40 border border-slate-200/50 flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(37,99,235,0.1)] hover:-translate-y-1 transition-all duration-300 relative min-h-[240px] group">
-                  <span className="absolute top-2 right-4 text-7xl text-slate-200/50 font-serif leading-none select-none group-hover:text-primary-100 transition-colors pointer-events-none">&ldquo;</span>
-                  
-                  <p className="text-slate-600 text-sm sm:text-base italic leading-relaxed mb-6 relative z-10">
-                    &ldquo;{t.text}&rdquo;
-                  </p>
-                  <div>
-                    <span className="block font-bold text-slate-800 text-sm">{t.name}</span>
-                    <span className="text-xs text-primary-600 font-bold">{t.role}</span>
-                  </div>
-                </div>
-              ))}
-              {/* Duplicate array for seamless infinite scroll */}
-              {localTestimonials.map((t, idx) => (
-                <div key={`dup-${idx}`} className="w-[320px] sm:w-[380px] shrink-0 whitespace-normal p-8 rounded-[2rem] bg-slate-50/40 border border-slate-200/50 flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(37,99,235,0.1)] hover:-translate-y-1 transition-all duration-300 relative min-h-[240px] group">
-                  <span className="absolute top-2 right-4 text-7xl text-slate-200/50 font-serif leading-none select-none group-hover:text-primary-100 transition-colors pointer-events-none">&ldquo;</span>
-                  
-                  <p className="text-slate-600 text-sm sm:text-base italic leading-relaxed mb-6 relative z-10">
-                    &ldquo;{t.text}&rdquo;
-                  </p>
-                  <div>
-                    <span className="block font-bold text-slate-800 text-sm">{t.name}</span>
-                    <span className="text-xs text-primary-600 font-bold">{t.role}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <TestimonialsSection lang={lang} />
 
       {/* 9. Contact & Maps Section */}
       <section className="py-20 sm:py-32 bg-slate-50 border-t border-slate-100">
