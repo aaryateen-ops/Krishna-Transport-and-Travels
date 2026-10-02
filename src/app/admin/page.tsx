@@ -8,6 +8,7 @@ import {
   getInquiries, 
   updateInquiryOperations, 
   deleteInquiry, 
+  submitInquiry,
   OperationalUpdateData 
 } from "@/app/actions";
 import { 
@@ -183,6 +184,18 @@ export default function AdminDashboard() {
   const [newDriverPhone, setNewDriverPhone] = useState("");
   const [newDriverVehicle, setNewDriverVehicle] = useState("टाटा एस (छोटा हाथी)");
   const [newDriverPlate, setNewDriverPlate] = useState("");
+
+  // Quick New Manual Booking Modal State
+  const [showNewBookingModal, setShowNewBookingModal] = useState(false);
+  const [newCustName, setNewCustName] = useState("");
+  const [newCustPhone, setNewCustPhone] = useState("");
+  const [newPickup, setNewPickup] = useState("");
+  const [newDrop, setNewDrop] = useState("");
+  const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0]);
+  const [newTime, setNewTime] = useState("10:00 AM");
+  const [newGoods, setNewGoods] = useState("घरेलू सामान / दुकान का माल");
+  const [newNotes, setNewNotes] = useState("");
+  const [creatingBooking, setCreatingBooking] = useState(false);
 
   // Rate calculator in-tab state
   const [calcPickup, setCalcPickup] = useState("salarpur");
@@ -476,6 +489,40 @@ export default function AdminDashboard() {
     }
   };
 
+  // Create Manual Phone Booking from Admin
+  const handleCreateManualBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustName || !newCustPhone || !newPickup || !newDrop) {
+      alert("कृपया आवश्यक जानकारी भरें।");
+      return;
+    }
+
+    setCreatingBooking(true);
+    const result = await submitInquiry({
+      fullName: newCustName.trim(),
+      phoneNumber: newCustPhone.trim(),
+      pickupLocation: newPickup.trim(),
+      dropLocation: newDrop.trim(),
+      bookingDate: newDate,
+      bookingTime: newTime,
+      goodsType: newGoods.trim(),
+      notes: newNotes.trim() || "फोन द्वारा सीधी बुकिंग (रोहित सिंह)",
+    });
+
+    if (result.success) {
+      setShowNewBookingModal(false);
+      setNewCustName("");
+      setNewCustPhone("");
+      setNewPickup("");
+      setNewDrop("");
+      setNewNotes("");
+      await handleRefresh();
+    } else {
+      alert(`त्रुटि: ${result.error}`);
+    }
+    setCreatingBooking(false);
+  };
+
   // WhatsApp helpers
   const getCustomerWhatsAppUrl = (inquiry: any) => {
     const cleanPhone = inquiry.phone_number.replace(/\D/g, "");
@@ -609,13 +656,14 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col lg:flex-row antialiased">
+    // STRICT ENTERPRISE APP SHELL: Pinned 100vh viewport, Zero window jump/scroll
+    <div className="h-screen w-screen overflow-hidden bg-[#F8FAFC] text-slate-900 flex antialiased">
       
-      {/* 1. LEFT SIDEBAR (Stripe / Linear High-Contrast Aesthetic) */}
-      <aside className="hidden lg:flex w-64 bg-slate-950 text-slate-300 border-r border-slate-800/80 flex-col shrink-0 sticky top-0 h-screen z-40 select-none">
+      {/* 1. LEFT SIDEBAR: Pinned permanently to left, NEVER scrolls away */}
+      <aside className="hidden lg:flex w-64 h-full bg-slate-950 text-slate-300 border-r border-slate-800/80 flex-col shrink-0 z-40 select-none overflow-hidden">
         
-        {/* Brand / Workspace Header */}
-        <div className="h-16 px-5 border-b border-slate-800/80 flex items-center justify-between">
+        {/* Brand / Workspace Header (Permanent Top) */}
+        <div className="h-16 px-5 border-b border-slate-800/80 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-inner">
               KT
@@ -633,7 +681,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
         </div>
 
         {/* Super Admin Identity Badge */}
-        <div className="px-4 py-3 border-b border-slate-900 bg-slate-900/40">
+        <div className="px-4 py-3 border-b border-slate-900 bg-slate-900/40 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-center text-xs font-bold">
               RS
@@ -687,13 +735,13 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               <span>Orders & Leads</span>
             </div>
             {stats.pending > 0 ? (
-              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full">
-                {stats.pending}
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full animate-pulse">
+                {stats.pending} new
               </span>
             ) : (
-              <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">
-                2
-              </kbd>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">
+                {inquiries.length}
+              </span>
             )}
           </button>
 
@@ -710,8 +758,8 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               <Users className="w-4 h-4 text-emerald-400" />
               <span>Fleet & Drivers</span>
             </div>
-            <span className="text-[10px] font-mono text-slate-500">
-              {drivers.length}
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+              {drivers.length} Drivers
             </span>
           </button>
 
@@ -728,9 +776,6 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               <Calculator className="w-4 h-4 text-indigo-400" />
               <span>Rate Calculator</span>
             </div>
-            <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">
-              4
-            </kbd>
           </button>
 
           <button
@@ -746,14 +791,11 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               <Settings className="w-4 h-4 text-slate-400" />
               <span>Settings</span>
             </div>
-            <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">
-              5
-            </kbd>
           </button>
         </nav>
 
         {/* Bottom Status & Audio Controls */}
-        <div className="p-3 border-t border-slate-800/80 space-y-2 bg-slate-950">
+        <div className="p-3 border-t border-slate-800/80 space-y-2 bg-slate-950 shrink-0">
           <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px]">
             <span className="flex items-center gap-1.5 text-slate-400">
               <Volume2 className="w-3.5 h-3.5 text-slate-400" /> Sound Bell
@@ -791,11 +833,11 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
         </div>
       </aside>
 
-      {/* 2. MAIN WORKSPACE */}
-      <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-8">
+      {/* 2. RIGHT MAIN WORKSPACE: Isolated scroll container */}
+      <div className="flex-1 h-full flex flex-col min-w-0 overflow-hidden">
         
-        {/* Top Navbar */}
-        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+        {/* Pinned Top Navbar */}
+        <header className="h-16 shrink-0 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between z-30 shadow-xs select-none">
           
           {/* Breadcrumb / Title */}
           <div className="flex items-center gap-3">
@@ -820,6 +862,16 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Realtime Live</span>
             </div>
+
+            {/* Quick Phone Booking Button */}
+            <button
+              type="button"
+              onClick={() => setShowNewBookingModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">New Booking</span>
+            </button>
 
             {/* Sound Toggle (Mobile / Quick) */}
             <button
@@ -853,55 +905,55 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
           </div>
         </header>
 
-        {/* Realtime Floating Notification Banner (Linear Alert Style) */}
-        {newOrderAlert && (
-          <div className="m-4 sm:mx-6 p-3.5 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
-                <BellRing className="w-4 h-4 animate-bounce" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-white">New Booking Received</span>
-                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                    {newOrderAlert.inquiry_code}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 mt-0.5">
-                  {newOrderAlert.full_name} • {newOrderAlert.pickup_location} → {newOrderAlert.drop_location}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 self-end sm:self-auto">
-              <a
-                href={`tel:${newOrderAlert.phone_number}`}
-                className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
-              >
-                <Phone className="w-3 h-3" /> Call
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("orders");
-                  setNewOrderAlert(null);
-                }}
-                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition-colors"
-              >
-                View
-              </button>
-              <button
-                type="button"
-                onClick={() => setNewOrderAlert(null)}
-                className="p-1 text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
+        {/* WORKSPACE CONTENT SCROLL CONTAINER */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 pb-24 lg:pb-12">
 
-        {/* Content Container */}
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+          {/* Realtime Floating Notification Banner (Linear Alert Style) */}
+          {newOrderAlert && (
+            <div className="p-3.5 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top duration-300">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                  <BellRing className="w-4 h-4 animate-bounce" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-white">New Booking Received</span>
+                    <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                      {newOrderAlert.inquiry_code}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {newOrderAlert.full_name} • {newOrderAlert.pickup_location} → {newOrderAlert.drop_location}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <a
+                  href={`tel:${newOrderAlert.phone_number}`}
+                  className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  <Phone className="w-3 h-3" /> Call
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("orders");
+                    setNewOrderAlert(null);
+                  }}
+                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition-colors"
+                >
+                  View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewOrderAlert(null)}
+                  className="p-1 text-slate-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* TAB 1: DASHBOARD */}
           {activeTab === "dashboard" && (
@@ -946,7 +998,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Fare quoted or driver assigned
+                    Fare quoted or vehicle scheduled
                   </p>
                 </div>
 
@@ -965,7 +1017,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Safely delivered in Varanasi
+                    Safely delivered across Varanasi
                   </p>
                 </div>
 
@@ -981,126 +1033,216 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Total gross pipeline value
+                    Total freight booked pipeline
                   </p>
                 </div>
 
               </div>
 
-              {/* Pending Queue & Fleet Overview */}
+              {/* Main Dashboard Rows */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Urgent Pending List */}
-                <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-sm font-bold text-slate-900">Urgent Inquiries</h2>
-                      <p className="text-xs text-slate-500">New leads requesting vehicles</p>
+                {/* Pending & Recent Bookings List (2 cols) */}
+                <div className="lg:col-span-2 space-y-6">
+                  
+                  {/* Urgent Pending List */}
+                  {stats.pending > 0 && (
+                    <div className="bg-white border border-amber-200/80 rounded-xl shadow-xs overflow-hidden">
+                      <div className="px-5 py-3.5 bg-amber-50/50 border-b border-amber-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                          <h2 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                            Urgent Pending Leads ({stats.pending})
+                          </h2>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrderFilter("pending");
+                            setActiveTab("orders");
+                          }}
+                          className="text-xs font-semibold text-amber-700 hover:text-amber-800 flex items-center gap-1"
+                        >
+                          Manage All <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+
+                      <div className="divide-y divide-amber-100/60">
+                        {inquiries.filter((i) => i.status === "pending").map((inquiry) => (
+                          <div key={inquiry.id} className="p-4 hover:bg-amber-50/30 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-white border border-amber-200 text-amber-900">
+                                  {inquiry.inquiry_code}
+                                </span>
+                                <span className="text-xs font-bold text-slate-900">{inquiry.full_name}</span>
+                                <span className="text-xs text-slate-500 font-mono">({inquiry.phone_number})</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-slate-600">
+                                <span className="font-semibold text-slate-800">{inquiry.pickup_location}</span>
+                                <span className="text-slate-400">→</span>
+                                <span className="font-semibold text-slate-800">{inquiry.drop_location}</span>
+                                <span className="text-slate-400">•</span>
+                                <span className="text-slate-500">{inquiry.goods_type}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <a
+                                href={`tel:${inquiry.phone_number}`}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs flex items-center gap-1.5 transition-colors"
+                              >
+                                <Phone className="w-3.5 h-3.5 text-blue-600" /> Call
+                              </a>
+                              <a
+                                href={getCustomerWhatsAppUrl(inquiry)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+                              >
+                                <WhatsAppIcon className="w-3.5 h-3.5 fill-current" /> WhatsApp
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOrderFilter("pending");
-                        setActiveTab("orders");
-                      }}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                    >
-                      View all ({stats.pending}) <ArrowRight className="w-3 h-3" />
-                    </button>
-                  </div>
+                  )}
 
-                  <div className="divide-y divide-slate-100">
-                    {inquiries.filter((i) => i.status === "pending").slice(0, 5).map((inquiry) => (
-                      <div key={inquiry.id} className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-800">
-                              {inquiry.inquiry_code}
-                            </span>
-                            <span className="text-xs font-bold text-slate-900">{inquiry.full_name}</span>
-                            <span className="text-xs text-slate-500 font-mono">({inquiry.phone_number})</span>
+                  {/* Recent Operations Activity (Stripe Clean Transaction List) */}
+                  <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-sm font-bold text-slate-900">Recent Booking & Dispatch Activity</h2>
+                        <p className="text-xs text-slate-500">Live operational ledger across Varanasi & highways.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOrderFilter("all");
+                          setActiveTab("orders");
+                        }}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                      >
+                        All Orders ({inquiries.length}) <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-slate-100">
+                      {inquiries.slice(0, 6).map((inquiry) => (
+                        <div key={inquiry.id} className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-800">
+                                {inquiry.inquiry_code}
+                              </span>
+                              <span className="text-xs font-bold text-slate-900">{inquiry.full_name}</span>
+                              
+                              {/* Status Chip */}
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-semibold border ${
+                                inquiry.status === "completed"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  : inquiry.status === "contacted"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : inquiry.status === "assigned"
+                                  ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                                  : inquiry.status === "cancelled"
+                                  ? "bg-rose-50 text-rose-700 border-rose-200"
+                                  : "bg-amber-50 text-amber-700 border-amber-200"
+                              }`}>
+                                <span className="w-1 h-1 rounded-full bg-current" />
+                                <span className="capitalize">{inquiry.status}</span>
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                              <span className="font-medium text-slate-800">{inquiry.pickup_location}</span>
+                              <span className="text-slate-400">→</span>
+                              <span className="font-medium text-slate-800">{inquiry.drop_location}</span>
+                              {inquiry.quoted_amount && (
+                                <>
+                                  <span className="text-slate-400">•</span>
+                                  <span className="font-mono font-bold text-slate-900">₹{inquiry.quoted_amount}</span>
+                                </>
+                              )}
+                              {inquiry.driver_name && (
+                                <>
+                                  <span className="text-slate-400">•</span>
+                                  <span className="text-slate-500 font-medium">Driver: {inquiry.driver_name}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-slate-600">
-                            <span className="font-medium text-slate-800">{inquiry.pickup_location}</span>
-                            <span className="text-slate-400">→</span>
-                            <span className="font-medium text-slate-800">{inquiry.drop_location}</span>
-                            <span className="text-slate-400">•</span>
-                            <span className="text-slate-500">{inquiry.goods_type}</span>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <a
+                              href={`tel:${inquiry.phone_number}`}
+                              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-xs transition-colors"
+                              title="Call Customer"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                            </a>
+                            <Link
+                              href={`/track/${inquiry.inquiry_code}`}
+                              target="_blank"
+                              className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs flex items-center gap-1 transition-colors"
+                            >
+                              <span>Tracking</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <a
-                            href={`tel:${inquiry.phone_number}`}
-                            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs flex items-center gap-1.5 transition-colors"
-                          >
-                            <Phone className="w-3.5 h-3.5 text-blue-600" /> Call
-                          </a>
-                          <a
-                            href={getCustomerWhatsAppUrl(inquiry)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
-                          >
-                            <WhatsAppIcon className="w-3.5 h-3.5 fill-current" /> WhatsApp
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-
-                    {inquiries.filter((i) => i.status === "pending").length === 0 && (
-                      <div className="p-8 text-center text-slate-500">
-                        <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                        <p className="text-xs font-semibold text-slate-800">All caught up!</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">No pending customer inquiries at the moment.</p>
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
+
                 </div>
 
-                {/* Fleet Availability Widget */}
-                <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden flex flex-col">
-                  <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-sm font-bold text-slate-900">Fleet Status</h2>
-                      <p className="text-xs text-slate-500">Drivers in Varanasi</p>
+                {/* Fleet Availability Widget (1 col) */}
+                <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden flex flex-col justify-between">
+                  <div>
+                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-sm font-bold text-slate-900">Fleet Status</h2>
+                        <p className="text-xs text-slate-500">Drivers stationed in Varanasi</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("drivers")}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                      >
+                        Manage
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("drivers")}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                    >
-                      Manage
-                    </button>
-                  </div>
 
-                  <div className="p-4 flex-1 space-y-3">
-                    {drivers.map((driver) => (
-                      <div key={driver.id} className="p-3 rounded-lg border border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-900">{driver.name}</span>
-                            <span className={`inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
-                              driver.status === "available"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-blue-50 text-blue-700 border border-blue-200"
-                            }`}>
-                              {driver.status === "available" ? "Available" : "On Duty"}
+                    <div className="p-4 space-y-3">
+                      {drivers.map((driver) => (
+                        <div key={driver.id} className="p-3 rounded-lg border border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-900">{driver.name}</span>
+                              <span className={`inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                                driver.status === "available"
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : "bg-blue-50 text-blue-700 border border-blue-200"
+                              }`}>
+                                {driver.status === "available" ? "Available" : "On Duty"}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-slate-500 font-mono mt-0.5 block">
+                              {driver.vehicleType} • {driver.vehicleNumber}
                             </span>
                           </div>
-                          <span className="text-[11px] text-slate-500 font-mono mt-0.5 block">
-                            {driver.vehicleType} • {driver.vehicleNumber}
-                          </span>
+                          <a
+                            href={`tel:${driver.phone}`}
+                            className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+                            title="Call Driver"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                          </a>
                         </div>
-                        <a
-                          href={`tel:${driver.phone}`}
-                          className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
-                          title="Call Driver"
-                        >
-                          <Phone className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
 
                   {/* Calculator CTA Card */}
@@ -1185,12 +1327,12 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               <div className="space-y-3">
                 {filteredInquiries.map((inquiry) => {
                   const state = formStates[inquiry.id] || {
-                    quoted_amount: "",
-                    driver_name: "",
-                    driver_phone: "",
-                    vehicle_number: "",
+                    quoted_amount: inquiry.quoted_amount ? String(inquiry.quoted_amount) : "",
+                    driver_name: inquiry.driver_name || "",
+                    driver_phone: inquiry.driver_phone || "",
+                    vehicle_number: inquiry.vehicle_number || "",
                     status: inquiry.status || "pending",
-                    cancellation_reason: "",
+                    cancellation_reason: inquiry.cancellation_reason || "",
                   };
 
                   const isSaved = savedSuccessId === inquiry.id;
@@ -1303,11 +1445,6 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                             <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
                               📅 {inquiry.booking_date} ({inquiry.booking_time})
                             </span>
-                            {inquiry.vehicle_preference && (
-                              <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                                🚚 {inquiry.vehicle_preference}
-                              </span>
-                            )}
                           </div>
 
                           {inquiry.notes && (
@@ -2072,11 +2209,163 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
             </div>
           )}
 
-        </main>
+        </div>
 
       </div>
 
-      {/* 3. MOBILE ERGONOMIC BOTTOM NAV (Linear / Stripe Mobile Navigation) */}
+      {/* 3. QUICK MANUAL BOOKING MODAL (Phone Booking Entry) */}
+      {showNewBookingModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Direct Phone Booking Entry</h3>
+                <p className="text-xs text-slate-500">Record a booking received over phone call or WhatsApp.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNewBookingModal(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateManualBooking} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                    Customer Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newCustName}
+                    onChange={(e) => setNewCustName(e.target.value)}
+                    placeholder="e.g. Suresh Kumar"
+                    className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                    Mobile Number (10 Digits) *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={newCustPhone}
+                    onChange={(e) => setNewCustPhone(e.target.value.replace(/\D/g, ""))}
+                    placeholder="9838000000"
+                    maxLength={10}
+                    className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-medium outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                    Pickup Location (Varanasi) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newPickup}
+                    onChange={(e) => setNewPickup(e.target.value)}
+                    placeholder="e.g. लंका चौराहा"
+                    className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                    Drop Destination *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newDrop}
+                    onChange={(e) => setNewDrop(e.target.value)}
+                    placeholder="e.g. सिगरा / कैंट स्टेशन"
+                    className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Time</label>
+                  <input
+                    type="text"
+                    required
+                    value={newTime}
+                    onChange={(e) => setNewTime(e.target.value)}
+                    placeholder="10:00 AM"
+                    className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Cargo Type</label>
+                  <input
+                    type="text"
+                    required
+                    value={newGoods}
+                    onChange={(e) => setNewGoods(e.target.value)}
+                    placeholder="Household / Shop"
+                    className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-slate-700 block mb-1">Notes / Instructions</label>
+                <input
+                  type="text"
+                  value={newNotes}
+                  onChange={(e) => setNewNotes(e.target.value)}
+                  placeholder="e.g. 1 हेल्पर चाहिए, पहली मंजिल पर चढ़ाना है"
+                  className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowNewBookingModal(false)}
+                  className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingBooking}
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5"
+                >
+                  {creatingBooking ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <span>Create Booking</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. MOBILE ERGONOMIC BOTTOM NAV */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1 shadow-lg flex items-center justify-around select-none">
         
         <button
