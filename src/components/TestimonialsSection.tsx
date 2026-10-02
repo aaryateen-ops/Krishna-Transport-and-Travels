@@ -43,7 +43,7 @@ const TESTIMONIALS_DATA: TestimonialItem[] = [
     category: "commercial",
     vehicle: { hi: "पियाजियो आपे लोडर", en: "Piaggio Ape Loader" },
     text: {
-      hi: "रोहित भैया की सर्विस एकदम नंबर वन है! लंका से सिगra दुकान का माल 25 मिनट में पहुंचा दिया। किराया भी मार्केट से कम और साफ-सुथरा तय किया था, कोई एक्स्ट्रा पैसा नहीं मांगा।",
+      hi: "रोहित भैया की सर्विस एकदम नंबर वन है! लंका से सिगरा दुकान का माल 25 मिनट में पहुंचा दिया। किराया भी मार्केट से कम और साफ-सुथरा तय किया था, कोई एक्स्ट्रा पैसा नहीं मांगा।",
       en: "Rohit bhaiya's service is top notch! Delivered my store goods from Lanka to Sigra in just 25 minutes. Clean transparent pricing, no hidden charges."
     },
     date: "हाल ही में (Recently)",
@@ -187,12 +187,12 @@ export default function TestimonialsSection({ lang }: TestimonialsSectionProps) 
             <span>4.9 / 5.0</span>
             <span className="text-slate-400 font-normal">|</span>
             <span className="text-slate-700">
-              {lang === "hi" ? "180+ बनारस व पूर्वांचल ग्राहक समीक्षाएं" : "180+ Verified Customer Reviews"}
+              {lang === "hi" ? "स्थानीय बनारसी ग्राहकों का भरोसा" : "Trusted by Local Varanasi Customers"}
             </span>
           </div>
 
           <span className="text-xs font-extrabold text-accent-600 uppercase tracking-widest">
-            {lang === "hi" ? "सच्चा भरोसा • असली ग्राहक" : "Real Stories • Verified Customers"}
+            {lang === "hi" ? "सच्चा अनुभव • संतुष्ट ग्राहक" : "Real Experience • Happy Clients"}
           </span>
 
           <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl lg:text-5xl text-primary-900 leading-tight">
@@ -201,28 +201,28 @@ export default function TestimonialsSection({ lang }: TestimonialsSectionProps) 
 
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-2xl">
             {lang === "hi"
-              ? "छात्रों के रूम से लेकर व्यापारियों की मंडियों तक — हमारे साथ हर शिफ्टिंग और माल डिलीवरी 100% सुरक्षित और वादे के मुताबिक होती है।"
+              ? "छात्रों के हॉस्टल रूम से लेकर गोदामों व थोक मंडियों तक — हर शिफ्टिंग में सामान की पूरी सुरक्षा और ड्राइवर की जिम्मेदारी।"
               : "From student hostel rooms to wholesale mandi dispatches — safe, reliable, and damage-free logistics with upfront pricing."}
           </p>
 
           {/* Key Guarantee Metrics */}
           <div className="grid grid-cols-3 gap-2 sm:gap-6 mt-4 w-full max-w-xl">
             <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-sm text-center">
-              <span className="block font-display font-black text-xl sm:text-2xl text-emerald-700">100%</span>
+              <span className="block font-display font-black text-lg sm:text-xl text-emerald-700">सुरक्षित</span>
               <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">
-                {lang === "hi" ? "सुरक्षित डिलीवरी" : "Damage-Free"}
+                {lang === "hi" ? "वाटरप्रूफ तिरपाल" : "Tarpaulin Covered"}
               </span>
             </div>
             <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-sm text-center">
-              <span className="block font-display font-black text-xl sm:text-2xl text-primary-800">15 Min</span>
+              <span className="block font-display font-black text-lg sm:text-xl text-primary-800">15-20 Min</span>
               <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">
-                {lang === "hi" ? "औसत पिकअप" : "Avg Pickup Time"}
+                {lang === "hi" ? "लोकल पिकअप" : "Fast Dispatch"}
               </span>
             </div>
             <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-sm text-center">
-              <span className="block font-display font-black text-xl sm:text-2xl text-accent-600">₹0</span>
+              <span className="block font-display font-black text-lg sm:text-xl text-accent-600">सीधा संपर्क</span>
               <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">
-                {lang === "hi" ? "हिडन सरचार्ज" : "Zero Hidden Fee"}
+                {lang === "hi" ? "मालिक से बात" : "Direct Owner Call"}
               </span>
             </div>
           </div>

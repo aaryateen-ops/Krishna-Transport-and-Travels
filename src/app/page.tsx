@@ -11,6 +11,8 @@ import FleetSection from "@/components/FleetSection";
 import RouteMatrixSection from "@/components/RouteMatrixSection";
 import ServicesSection from "@/components/ServicesSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
+import FAQSection from "@/components/FAQSection";
+import LocalityHubSection from "@/components/LocalityHubSection";
 import { 
   Truck, 
   Package, 
@@ -538,16 +540,16 @@ function HomeContent() {
                </div>
             </div>
 
-            {/* Video side (Reel placed in a nice container) */}
+            {/* Video side (Reel placed in a clean smartphone container) */}
             <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
-               <div className="relative w-full max-w-[320px] sm:max-w-[360px] aspect-[9/16] rounded-[2.5rem] overflow-hidden shadow-2xl border-[10px] border-slate-100 bg-white rotate-1 hover:rotate-0 transition-transform duration-500 ring-1 ring-slate-200/50">
+               <div className="relative w-full max-w-[320px] sm:max-w-[360px] aspect-[9/16] rounded-[2.5rem] overflow-hidden shadow-2xl border-[8px] border-slate-900 bg-slate-900 ring-1 ring-slate-800">
                   <iframe
                     src="https://www.youtube.com/embed/HQ4dFmRiSFU?autoplay=1&mute=1&loop=1&playlist=HQ4dFmRiSFU&controls=1&modestbranding=1&rel=0"
                     title="Krishna Transport Shifting & Cargo Service"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     loading="lazy"
-                    className="w-full h-full border-none object-cover pointer-events-auto rounded-3xl"
+                    className="w-full h-full border-none object-cover pointer-events-auto rounded-[2rem]"
                   />
                </div>
             </div>
@@ -561,7 +563,7 @@ function HomeContent() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 flex flex-col gap-6 text-center lg:text-left">
               <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest">{t.whyTag}</span>
-              <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 py-2">
+              <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-slate-900 leading-tight">
                 {t.whyTitle}
               </h2>
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
@@ -607,12 +609,15 @@ function HomeContent() {
       {/* 6. Interactive Route & Logistics Matrix Section */}
       <RouteMatrixSection lang={lang} />
 
+      {/* 6.5 Varanasi Locality & Micro-Markets Hub Section */}
+      <LocalityHubSection lang={lang} />
+
       {/* 7. Inquiry Form & Booking Flow */}
       <section id="inquiry" className="py-20 sm:py-32 bg-slate-50 border-b border-slate-100 scroll-mt-16 sm:scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-5 flex flex-col justify-center gap-6">
             <span className="text-xs font-extrabold text-accent-500 uppercase tracking-widest text-center lg:text-left">{t.inquiryTag}</span>
-            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-primary-700 to-accent-600 text-center lg:text-left py-2">
+            <h2 className="font-display font-black tracking-tight text-3xl sm:text-4xl text-slate-900 text-center lg:text-left leading-tight">
               {t.inquiryTitle}
             </h2>
             <p className="text-slate-600 text-sm sm:text-base text-center lg:text-left mb-4">
@@ -653,6 +658,9 @@ function HomeContent() {
       {/* 8. Testimonials Section */}
       <TestimonialsSection lang={lang} />
 
+      {/* 8.5 Frequently Asked Questions (Banarasi Logistics FAQ) */}
+      <FAQSection lang={lang} />
+
       {/* 9. Contact & Maps Section */}
       <section className="py-20 sm:py-32 bg-slate-50 border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -686,7 +694,7 @@ function HomeContent() {
                 <Package className="w-5 h-5 text-accent-500 shrink-0 mt-0.5" />
                 <div>
                   <span className="block font-bold text-slate-800 text-sm">{t.emailLabel}</span>
-                  <span className="text-xs text-slate-500">rohitshekhawat47@gmail.com</span>
+                  <span className="text-xs text-slate-500">rohitsingh0641346@gmail.com</span>
                 </div>
               </div>
             </div>

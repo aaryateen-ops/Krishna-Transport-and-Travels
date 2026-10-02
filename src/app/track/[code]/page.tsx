@@ -70,9 +70,9 @@ export default function TrackingDetailsPage() {
       notesLabel: "सामान की लिस्ट / जरूरी निर्देश",
       receiptTermsTitle: "रसीद के नियम व शर्तें (Notes):",
       termsList: [
-        "• किराया तय दूरी, टोल टैक्स और लेबर के हिसाब से बदल सकता है।",
-        "• गाड़ी अलॉट होने के बाद बुकिंग रद्द करने पर ₹200 चार्ज लगेगा।",
-        "• सामान लोड करने से पहले ड्राइवर के साथ लिस्ट जरूर मिला लें।"
+        "• गाड़ी पिकअप पॉइंट पर पहुँचने से पहले बुकिंग कैंसल करना पूरी तरह निःशुल्क है।",
+        "• टोल टैक्स, चुंगी और पार्किंग शुल्क (यदि लागू हो) वास्तविक पर्ची के अनुसार देय होगा।",
+        "• सामान लोड करने से पहले ड्राइवर के साथ सामान की लिस्ट और तय किराया जरूर मिला लें।"
       ],
       authSign: "अधिकृत हस्ताक्षर",
       cancelStatus: "यह बुकिंग रद्द हो चुकी है और अब चालू नहीं है।",
@@ -129,9 +129,9 @@ export default function TrackingDetailsPage() {
       notesLabel: "Goods Description / Instructions",
       receiptTermsTitle: "Receipt Notes & Terms:",
       termsList: [
-        "• Pricing is subject to actual distance, road tolls, and labor requested.",
-        "• Minimum cancellation charges of ₹200 apply once driver is dispatched.",
-        "• Please verify your items checklist before loading with the driver."
+        "• Free cancellation anytime before the vehicle arrives at the pickup spot.",
+        "• Highway tolls, entry taxes, and parking (if applicable) payable as per actual slips.",
+        "• Please verify your items checklist and agreed rate with the driver prior to loading."
       ],
       authSign: "Authorized Sign",
       cancelStatus: "This booking is no longer active.",
