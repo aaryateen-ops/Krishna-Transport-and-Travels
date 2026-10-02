@@ -86,6 +86,19 @@
 - [x] **Dynamic Sitemap & Crawl Optimization (`src/app/sitemap.ts`):**
   - Optimized daily crawl frequencies for Googlebot indexing.
 
+### 2.7 Real-Time Admin Command Center & Mobile PWA Power (Completed ✅)
+- [x] **Supabase WebSocket Realtime Synchronization (`admin-inquiries-live`):**
+  - Instantly prepends new incoming bookings without refreshing the page.
+- [x] **Loud Audio Chime Synthesizer & Vibration API:**
+  - High-pitch, crisp order ringtone (Web Audio API) + phone vibration pattern when a lead arrives.
+  - Test ringtone button and audio mute/unmute toggle with localStorage persistence.
+- [x] **Realtime Glowing Alert Banner:**
+  - Flashes urgent notification on screen with 1-tap call and WhatsApp buttons.
+- [x] **1-Tap Driver WhatsApp Forwarding:**
+  - Generates full duty ticket with pickup, drop, goods, fare, and tracking slip link directly to driver's WhatsApp in 1 tap.
+- [x] **Mobile-First Command Cards & Never-Logout Session:**
+  - Big thumb-friendly buttons for Call, WhatsApp, Driver Assignment, Status progression, and Spam deletion.
+
 ---
 
 ## 3. Active & Next Priorities (In Progress / Up Next ⏳)
