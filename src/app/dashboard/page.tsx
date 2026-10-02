@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, startTransition } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,7 +26,13 @@ import {
   Truck,
   MessageSquare,
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  ArrowRight,
+  PhoneCall,
+  Activity,
+  Layers,
+  X,
+  ShieldCheck
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/useLanguage";
@@ -132,7 +138,6 @@ export default function CustomerDashboard() {
     try {
       const result = await cancelBooking(cancellingCode, cancelReason.trim());
       if (result.success) {
-        // Update local state status
         setInquiries((prev) => 
           prev.map((item) => 
             item.inquiry_code === cancellingCode 
@@ -141,7 +146,6 @@ export default function CustomerDashboard() {
           )
         );
         setCancellingCode(null);
-        alert("Booking cancelled successfully.");
       } else {
         alert(`Failed to cancel booking: ${result.error}`);
       }
@@ -152,37 +156,48 @@ export default function CustomerDashboard() {
     }
   };
 
-  // Helper for Status Badge styling
+  // Helper for Status Badge styling (Stripe / Linear Badge Standard)
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 rounded-full">
-            <Clock3 className="w-3.5 h-3.5" /> Pending
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            Pending Quote
           </span>
         );
       case "contacted":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 rounded-full">
-            <Truck className="w-3.5 h-3.5 animate-pulse" /> Contacted
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            In Discussion
+          </span>
+        );
+      case "assigned":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/80 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+            Vehicle Assigned
           </span>
         );
       case "completed":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-green-700 bg-green-50 border border-green-100 rounded-full">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            Completed
           </span>
         );
       case "cancelled":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-red-700 bg-red-50 border border-red-100 rounded-full">
-            <XCircle className="w-3.5 h-3.5" /> Cancelled
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200/80 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+            Cancelled
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-100 rounded-full">
-            Unknown
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-full">
+            {status}
           </span>
         );
     }
@@ -191,19 +206,26 @@ export default function CustomerDashboard() {
   // Filter & Search Logic
   const filteredInquiries = inquiries.filter((item) => {
     const matchesFilter = statusFilter === "all" || item.status === statusFilter;
+    const term = searchTerm.toLowerCase();
     const matchesSearch = 
-      item.inquiry_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.pickup_location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.drop_location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.goods_type?.toLowerCase().includes(searchTerm.toLowerCase());
+      item.inquiry_code?.toLowerCase().includes(term) ||
+      item.pickup_location?.toLowerCase().includes(term) ||
+      item.drop_location?.toLowerCase().includes(term) ||
+      item.goods_type?.toLowerCase().includes(term);
     return matchesFilter && matchesSearch;
   });
 
+  // Aggregate Metrics for Stripe-style Overview
+  const activeCount = inquiries.filter((i) => i.status === "pending" || i.status === "contacted" || i.status === "assigned").length;
+  const completedCount = inquiries.filter((i) => i.status === "completed").length;
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
-        <RefreshCw className="w-10 h-10 text-primary-600 animate-spin" />
-        <p className="mt-4 text-sm font-semibold text-slate-500">Loading your profile & bookings...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC]">
+        <div className="w-9 h-9 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <p className="mt-3 text-xs font-mono font-medium text-slate-500 uppercase tracking-wider">
+          Loading Customer Portal...
+        </p>
       </div>
     );
   }
@@ -215,432 +237,456 @@ export default function CustomerDashboard() {
   const bookNewRideUrl = `/#inquiry?name=${nameQuery}&phone=${phoneQuery}&email=${emailQuery}`;
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col antialiased">
       
-      {/* Dashboard Header */}
-      <header className="w-full bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-sm print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center overflow-hidden border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300">
+      {/* 1. TOP NAVBAR (Stripe / Linear Minimal Header) */}
+      <header className="h-16 bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+          
+          {/* Logo & Portal Identity */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="relative w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-slate-200 shadow-xs shrink-0 group-hover:scale-105 transition-transform duration-200">
               <Image 
                 src="/logo.png" 
                 alt="Krishna Transport Logo" 
                 fill 
                 unoptimized
-                className="object-cover scale-[1.4] origin-center"
+                className="object-cover scale-[1.3] origin-center"
               />
             </div>
             <div>
-              <span className="block font-display font-extrabold text-xs sm:text-sm text-primary-800 leading-tight">
-                {lang === "hi" ? "कृष्णा ट्रांसपोर्ट" : "Krishna Transport"}
+              <span className="block font-bold text-xs sm:text-sm text-slate-900 leading-tight">
+                Krishna Transport
               </span>
-              <span className="block font-sans font-bold text-[8px] text-slate-400 uppercase tracking-wider">
-                {lang === "hi" ? "कस्टमर पोर्टल" : "Customer Portal"}
+              <span className="block font-mono text-[9px] text-slate-400 uppercase tracking-wider">
+                Customer Portal
               </span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          {/* Right Header Navigation */}
+          <div className="flex items-center gap-2.5 sm:gap-4">
+            
             {/* Language Switcher */}
             <button
+              type="button"
               onClick={() => setLang(lang === "hi" ? "en" : "hi")}
-              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+              className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 transition-colors"
             >
               🌐 {lang === "hi" ? "English" : "हिन्दी"}
             </button>
 
-            <div className="hidden md:flex flex-col text-right">
-              <span className="text-xs font-extrabold text-slate-700 leading-tight">
-                {userMetadata.full_name || (lang === "hi" ? "प्रिय ग्राहक" : "Valued Customer")}
-              </span>
-              <span className="text-[10px] font-bold text-slate-400">
-                {userMetadata.phone_number || user?.email}
-              </span>
+            {/* Customer Identity Pill */}
+            <div className="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-200">
+              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center text-xs font-bold font-mono">
+                {userMetadata.full_name ? userMetadata.full_name.slice(0, 2).toUpperCase() : "CU"}
+              </div>
+              <div className="text-left">
+                <span className="block text-xs font-bold text-slate-900 leading-tight">
+                  {userMetadata.full_name || "Valued Customer"}
+                </span>
+                <span className="block text-[10px] text-slate-400 font-mono">
+                  {userMetadata.phone_number || user?.email}
+                </span>
+              </div>
             </div>
+
+            {/* Logout Button */}
             <button
+              type="button"
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 rounded-xl transition-all"
+              className="p-2 sm:px-3 sm:py-1.5 text-xs font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-lg transition-colors flex items-center gap-1.5"
               title="Logout from Account"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Logout</span>
             </button>
+
           </div>
+
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      {/* 2. MAIN WORKSPACE */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
         
-        {/* Welcome Section */}
-        <section className="bg-gradient-to-r from-primary-800 to-primary-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden mb-8">
-          {/* Decorative design */}
-          <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-white/10 to-transparent pointer-events-none"></div>
-          
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-            <div>
-              <span className="inline-block px-3 py-1 bg-white/10 text-accent-500 rounded-full text-[10px] font-extrabold uppercase tracking-widest mb-3">
-                Customer Dashboard
-              </span>
-              <h2 className="font-display font-extrabold text-2xl sm:text-3xl tracking-tight leading-tight">
-                Namaste, {userMetadata.full_name || "Valued Customer"}!
-              </h2>
-              <p className="text-slate-300 text-xs sm:text-sm mt-1 max-w-xl">
-                Check booking progress, connect with drivers, and book new transport trips across Varanasi and regional districts.
-              </p>
-              
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-xs font-bold text-slate-200">
-                {userMetadata.phone_number && (
-                  <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg">
-                    <Phone className="w-3.5 h-3.5 text-accent-500" /> {userMetadata.phone_number}
-                  </span>
-                )}
-                <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg">
-                  <Mail className="w-3.5 h-3.5 text-accent-500" /> {user?.email}
+        {/* Stripe-Style Customer Account Overview Card */}
+        <section className="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+                  Namaste, {userMetadata.full_name || "Valued Customer"}!
+                </h1>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-semibold">
+                  <ShieldCheck className="w-3 h-3" /> Verified Client
                 </span>
               </div>
+              <p className="text-xs text-slate-500 max-w-xl">
+                Track ongoing shipments, review quoted fares, and coordinate directly with Rohit Singh and our verified Varanasi driver fleet.
+              </p>
             </div>
 
-            <div className="shrink-0 flex flex-col sm:flex-row gap-3">
-              <Link
-                href={bookNewRideUrl}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-accent-500 hover:bg-accent-600 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-accent-500/20 transition-all uppercase tracking-wider hover:scale-[1.02]"
-              >
-                <Plus className="w-4 h-4" /> Book New Ride
-              </Link>
+            {/* CTA Buttons */}
+            <div className="flex items-center gap-2.5 shrink-0">
               <button
+                type="button"
                 onClick={handleRefresh}
                 disabled={refreshLoading}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/10 font-bold text-xs sm:text-sm rounded-2xl transition-all"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 shadow-xs transition-colors"
               >
-                <RefreshCw className={`w-4 h-4 ${refreshLoading ? "animate-spin" : ""}`} />
-                Refresh Data
+                <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${refreshLoading ? "animate-spin" : ""}`} />
+                <span>Sync</span>
               </button>
+
+              <Link
+                href={bookNewRideUrl}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Book New Transport</span>
+              </Link>
+            </div>
+
+          </div>
+
+          {/* Metric Summary Strip (Stripe Metric Tiles) */}
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 pt-6 border-t border-slate-100">
+            <div className="p-3 bg-slate-50/60 rounded-lg border border-slate-100">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                Total Inquiries
+              </span>
+              <span className="text-xl font-bold font-mono text-slate-900 mt-1 block">
+                {inquiries.length}
+              </span>
+            </div>
+
+            <div className="p-3 bg-slate-50/60 rounded-lg border border-slate-100">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                Active Trips
+              </span>
+              <span className="text-xl font-bold font-mono text-blue-600 mt-1 block">
+                {activeCount}
+              </span>
+            </div>
+
+            <div className="p-3 bg-slate-50/60 rounded-lg border border-slate-100">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                Completed Deliveries
+              </span>
+              <span className="text-xl font-bold font-mono text-emerald-600 mt-1 block">
+                {completedCount}
+              </span>
             </div>
           </div>
         </section>
 
-        {/* Dashboard Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Search & Linear Filter Segmented Strip */}
+        <section className="bg-white border border-slate-200/80 rounded-xl p-3 sm:p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
           
-          {/* Booking History Section */}
-          <div className="lg:col-span-12 space-y-6">
-            
-            {/* Filter and Search Bar */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-              <div className="relative w-full sm:max-w-xs">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Search className="w-4 h-4" />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search Booking ID, locations..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-50 focus:bg-white border border-slate-200 focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none rounded-xl text-xs font-semibold transition-all"
-                />
-              </div>
-
-              {/* Filter Tabs */}
-              <div className="flex items-center gap-1.5 self-stretch sm:self-auto overflow-x-auto pb-1 sm:pb-0">
-                {["all", "pending", "contacted", "completed", "cancelled"].map((filterOpt) => (
-                  <button
-                    key={filterOpt}
-                    onClick={() => setStatusFilter(filterOpt)}
-                    className={`px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${
-                      statusFilter === filterOpt
-                        ? "bg-primary-800 text-white shadow-sm"
-                        : "bg-slate-100 hover:bg-slate-200 text-slate-600"
-                    }`}
-                  >
-                    {filterOpt}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Error Message */}
-            {errorMsg && (
-              <div className="p-4 bg-red-50 border border-red-200 text-red-800 text-xs font-semibold rounded-2xl flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-red-500 shrink-0" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            {/* Bookings List */}
-            {filteredInquiries.length === 0 ? (
-              <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-sm">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 text-slate-400 mb-4">
-                  <Truck className="w-8 h-8" />
-                </div>
-                <h3 className="font-display font-extrabold text-lg text-primary-800">
-                  {inquiries.length === 0 ? "No Bookings Found" : "No Match for Filters"}
-                </h3>
-                <p className="text-slate-500 text-xs sm:text-sm mt-1 max-w-md mx-auto">
-                  {inquiries.length === 0
-                    ? "You haven't submitted any inquiries yet. Book your first ride and get immediate driver assignments."
-                    : "Try changing your search keywords or removing status filters to see other records."}
-                </p>
-                {inquiries.length === 0 && (
-                  <Link
-                    href={bookNewRideUrl}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary-800 hover:bg-primary-900 text-white font-bold text-xs rounded-xl shadow-md transition-all mt-5"
-                  >
-                    <Plus className="w-4 h-4" /> Book Your First Ride
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredInquiries.map((booking) => (
-                  <div 
-                    key={booking.id} 
-                    className="bg-white border border-slate-200/80 hover:border-primary-150 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col"
-                  >
-                    
-                    {/* Card Header */}
-                    <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                      <div>
-                        <span className="block font-display font-extrabold text-primary-800 text-sm">
-                          ID: {booking.inquiry_code}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400">
-                          Submitted on {new Date(booking.created_at).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric"
-                          })}
-                        </span>
-                      </div>
-                      <div>
-                        {getStatusBadge(booking.status)}
-                      </div>
-                    </div>
-
-                    {/* Card Body */}
-                    <div className="p-5 space-y-4.5 flex-1">
-                      
-                      {/* Route Info */}
-                      <div className="relative pl-5 border-l-2 border-dashed border-primary-200 space-y-3">
-                        {/* Pickup pin */}
-                        <div className="relative">
-                          <span className="absolute left-[-26px] top-0 bg-primary-50 text-primary-600 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-primary-100">
-                            A
-                          </span>
-                          <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Pickup Location</span>
-                          <span className="block text-xs font-extrabold text-slate-800 mt-1">{booking.pickup_location}</span>
-                        </div>
-                        {/* Drop pin */}
-                        <div className="relative">
-                          <span className="absolute left-[-26px] top-0 bg-accent-50 text-accent-600 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-accent-100">
-                            B
-                          </span>
-                          <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Drop Location</span>
-                          <span className="block text-xs font-extrabold text-slate-800 mt-1">{booking.drop_location}</span>
-                        </div>
-                      </div>
-
-                      {/* Date, Time & Goods */}
-                      <div className="grid grid-cols-3 gap-2 border-y border-slate-100 py-3.5 text-center">
-                        <div>
-                          <Calendar className="w-3.5 h-3.5 text-primary-600 mx-auto mb-1" />
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Date</span>
-                          <span className="block text-[11px] font-extrabold text-slate-700 mt-0.5">{booking.booking_date}</span>
-                        </div>
-                        <div>
-                          <Clock className="w-3.5 h-3.5 text-primary-600 mx-auto mb-1" />
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Time</span>
-                          <span className="block text-[11px] font-extrabold text-slate-700 mt-0.5">{booking.booking_time}</span>
-                        </div>
-                        <div>
-                          <Package className="w-3.5 h-3.5 text-primary-600 mx-auto mb-1" />
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Goods</span>
-                          <span className="block text-[11px] font-extrabold text-slate-700 mt-0.5 truncate px-1">{booking.goods_type}</span>
-                        </div>
-                      </div>
-
-                      {/* Weight, Notes */}
-                      {(booking.weight || booking.notes) && (
-                        <div className="space-y-1.5 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
-                          {booking.weight && (
-                            <div>
-                              <span className="font-bold text-slate-400">Weight:</span> <span className="font-extrabold text-slate-700">{booking.weight}</span>
-                            </div>
-                          )}
-                          {booking.notes && (
-                            <div className="line-clamp-2">
-                              <span className="font-bold text-slate-400">Notes:</span> <span className="italic text-slate-600">"{booking.notes}"</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Driver & Assignment Details */}
-                      <div className="bg-slate-50/50 rounded-2xl border border-slate-150 p-4 space-y-3">
-                        <h4 className="font-display font-extrabold text-xs text-primary-800 uppercase tracking-wider border-b border-slate-200/60 pb-1.5">
-                          Trip Operations Details
-                        </h4>
-
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          {/* Quote */}
-                          <div>
-                            <span className="block font-bold text-slate-400 text-[10px] uppercase">Quoted Amount</span>
-                            <span className="block font-extrabold text-slate-800 text-sm mt-0.5">
-                              {booking.quoted_amount ? `₹${booking.quoted_amount}` : "Awaiting Quote"}
-                            </span>
-                          </div>
-
-                          {/* Vehicle */}
-                          <div>
-                            <span className="block font-bold text-slate-400 text-[10px] uppercase">Vehicle Number</span>
-                            <span className="block font-extrabold text-slate-800 mt-0.5">
-                              {booking.vehicle_number || "Assigning..."}
-                            </span>
-                          </div>
-
-                          {/* Driver */}
-                          <div>
-                            <span className="block font-bold text-slate-400 text-[10px] uppercase">Driver Name</span>
-                            <span className="block font-extrabold text-slate-800 mt-0.5">
-                              {booking.driver_name || "Assigning..."}
-                            </span>
-                          </div>
-
-                          {/* Driver Contact */}
-                          <div>
-                            <span className="block font-bold text-slate-400 text-[10px] uppercase">Driver Phone</span>
-                            {booking.driver_phone ? (
-                              <a 
-                                href={`tel:${booking.driver_phone}`} 
-                                className="block font-extrabold text-primary-700 hover:underline mt-0.5"
-                              >
-                                {booking.driver_phone}
-                              </a>
-                            ) : (
-                              <span className="block text-slate-400 mt-0.5">Assigning...</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Cancellation Reason if cancelled */}
-                        {booking.status === "cancelled" && booking.cancellation_reason && (
-                          <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-xl text-xs text-red-700 font-semibold flex gap-1.5">
-                            <ShieldAlert className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                            <div>
-                              <span className="block text-[9px] uppercase tracking-wider text-red-500 font-bold">Cancellation Reason</span>
-                              <span className="block italic">"{booking.cancellation_reason}"</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Card Actions */}
-                    <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-wrap gap-2.5 justify-between items-center">
-                      <Link
-                        href={`/track/${booking.inquiry_code}`}
-                        className="flex items-center gap-1 text-[11px] font-extrabold text-primary-800 hover:text-accent-600 transition-colors uppercase tracking-wider"
-                      >
-                        Live Tracking <ExternalLink className="w-3.5 h-3.5" />
-                      </Link>
-
-                      <div className="flex gap-2">
-                        {/* Cancel Button: Only visible if pending */}
-                        {booking.status === "pending" && (
-                          <button
-                            onClick={() => handleCancelClick(booking.inquiry_code)}
-                            className="px-3 py-1.5 border border-red-200 hover:bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all"
-                          >
-                            Cancel Ride
-                          </button>
-                        )}
-                        
-                        {/* WhatsApp Helpline for booking */}
-                        <a
-                          href={`https://wa.me/917071634535?text=${encodeURIComponent(
-                            `Hello, I want to inquire about status for booking ID: ${booking.inquiry_code}.`
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366] hover:bg-[#20ba5a] text-white text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm"
-                        >
-                          <WhatsAppIcon className="w-3.5 h-3.5" /> Chat Helpline
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* Command Search */}
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by ID, location, cargo..."
+              className="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none rounded-lg text-xs font-medium transition-all"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             )}
           </div>
-        </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto w-full md:w-auto">
+            {[
+              { id: "all", label: "All Bookings", count: inquiries.length },
+              { id: "pending", label: "Pending", count: inquiries.filter((i) => i.status === "pending").length },
+              { id: "contacted", label: "In Discussion", count: inquiries.filter((i) => i.status === "contacted").length },
+              { id: "completed", label: "Completed", count: completedCount },
+              { id: "cancelled", label: "Cancelled", count: inquiries.filter((i) => i.status === "cancelled").length },
+            ].map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setStatusFilter(f.id)}
+                className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  statusFilter === f.id
+                    ? "bg-white text-slate-900 shadow-xs font-semibold"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <span>{f.label}</span>
+                <span className={`text-[10px] font-mono px-1 py-0.2 rounded-full ${
+                  statusFilter === f.id ? "bg-slate-100 text-slate-800" : "text-slate-400"
+                }`}>
+                  {f.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+        </section>
+
+        {/* Error Alert */}
+        {errorMsg && (
+          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold rounded-xl flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Bookings List (Linear / Stripe Ticket Style Cards) */}
+        {filteredInquiries.length === 0 ? (
+          <div className="bg-white border border-slate-200/80 rounded-xl p-12 text-center shadow-xs">
+            <Truck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-sm font-bold text-slate-900">
+              {inquiries.length === 0 ? "No Transport Bookings Found" : "No Matches for Selected Filter"}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              {inquiries.length === 0
+                ? "Book your first transport trip in Varanasi for household shifting, commercial cargo, or highway transit."
+                : "Try resetting your search query or status filter to see other records."}
+            </p>
+            {inquiries.length === 0 && (
+              <Link
+                href={bookNewRideUrl}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors mt-4"
+              >
+                <Plus className="w-3.5 h-3.5" /> Book Your First Ride
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredInquiries.map((booking) => (
+              <div
+                key={booking.id}
+                className="bg-white border border-slate-200/80 hover:border-slate-300 rounded-xl shadow-xs transition-colors flex flex-col justify-between overflow-hidden"
+              >
+                
+                {/* Header Strip */}
+                <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="font-mono text-xs font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs">
+                      {booking.inquiry_code}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono block mt-1">
+                      Booked {new Date(booking.created_at).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric"
+                      })}
+                    </span>
+                  </div>
+
+                  <div>
+                    {getStatusBadge(booking.status)}
+                  </div>
+                </div>
+
+                {/* Body: Route & Cargo Flow */}
+                <div className="p-4 space-y-3.5 flex-1">
+                  
+                  {/* Route Visualizer (Linear Style Nodes) */}
+                  <div className="space-y-2 border-l-2 border-slate-200 pl-3 ml-1 py-0.5">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 font-bold block">
+                        Pickup Location
+                      </span>
+                      <span className="text-xs font-semibold text-slate-900 block mt-0.5">
+                        {booking.pickup_location}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-blue-600 font-bold block">
+                        Drop Destination
+                      </span>
+                      <span className="text-xs font-semibold text-slate-900 block mt-0.5">
+                        {booking.drop_location}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Trip Details Grid */}
+                  <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-slate-100 text-center text-xs">
+                    <div>
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Date</span>
+                      <span className="font-semibold text-slate-700 mt-0.5 block">{booking.booking_date}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Time</span>
+                      <span className="font-semibold text-slate-700 mt-0.5 block">{booking.booking_time}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Cargo</span>
+                      <span className="font-semibold text-slate-700 mt-0.5 block truncate px-1">{booking.goods_type}</span>
+                    </div>
+                  </div>
+
+                  {/* Operations Details (Fare & Assigned Driver) */}
+                  <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-100 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 font-medium">Agreed Fare:</span>
+                      <span className="font-mono font-bold text-slate-900 text-sm">
+                        {booking.quoted_amount ? `₹${booking.quoted_amount}` : "Awaiting Quote"}
+                      </span>
+                    </div>
+
+                    {booking.driver_name && (
+                      <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-mono">Assigned Driver:</span>
+                          <span className="font-semibold text-slate-800">{booking.driver_name}</span>
+                          {booking.vehicle_number && (
+                            <span className="text-[10px] font-mono text-slate-500 block">
+                              ({booking.vehicle_number})
+                            </span>
+                          )}
+                        </div>
+                        {booking.driver_phone && (
+                          <a
+                            href={`tel:${booking.driver_phone}`}
+                            className="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1 shadow-xs transition-colors"
+                          >
+                            <Phone className="w-3 h-3 text-blue-600" /> Call Driver
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {booking.status === "cancelled" && booking.cancellation_reason && (
+                      <div className="pt-2 border-t border-slate-200/60 text-xs text-rose-700 flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span className="italic">"{booking.cancellation_reason}"</span>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* Card Action Footer */}
+                <div className="p-3.5 bg-slate-50/40 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <Link
+                    href={`/track/${booking.inquiry_code}`}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                  >
+                    <span>Track Live</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+
+                  <div className="flex items-center gap-2">
+                    {/* Cancellation Trigger */}
+                    {booking.status === "pending" && (
+                      <button
+                        type="button"
+                        onClick={() => handleCancelClick(booking.inquiry_code)}
+                        className="px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+
+                    {/* WhatsApp Support Button */}
+                    <a
+                      href={`https://wa.me/917071634535?text=${encodeURIComponent(
+                        `Hello Rohit Singh ji, I want to inquire about status for booking ID: ${booking.inquiry_code}.`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+                    >
+                      <WhatsAppIcon className="w-3 h-3 fill-current" />
+                      <span>WhatsApp Help</span>
+                    </a>
+                  </div>
+                </div>
+
+              </div>
+            ))}
+          </div>
+        )}
+
       </main>
 
-      {/* Cancel Booking Modal */}
+      {/* Cancel Booking Modal (Linear Dialog Style) */}
       {cancellingCode && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-200 max-w-md w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl border border-slate-200 max-w-md w-full p-5 shadow-xl animate-in fade-in zoom-in-95 duration-150 space-y-4">
+            
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-display font-extrabold text-lg text-primary-800">
+                <h3 className="text-sm font-bold text-slate-900">
                   Cancel Booking {cancellingCode}?
                 </h3>
-                <p className="text-slate-500 text-xs sm:text-sm mt-1">
-                  Are you sure you want to cancel this booking? This will inform Rohit to stop vehicle assignment. Please provide a reason below.
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Are you sure you want to cancel this booking? This will inform Rohit Singh to release any scheduled vehicle.
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleCancelSubmit} className="mt-4 space-y-4">
+            <form onSubmit={handleCancelSubmit} className="space-y-3 pt-2">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Reason for Cancellation
+                <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                  Reason for Cancellation *
                 </label>
                 <textarea
                   required
                   rows={3}
-                  placeholder="e.g. Plans changed, booked another service, or date modified..."
+                  placeholder="e.g. Schedule changed, shifted date, or booked another carrier..."
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  className="w-full p-3 bg-slate-50 focus:bg-white border border-slate-200 focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none rounded-xl text-xs font-semibold transition-all resize-none"
+                  className="w-full p-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 outline-none rounded-lg text-xs font-medium transition-all resize-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setCancellingCode(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
+                  className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50"
                 >
-                  Go Back
+                  Keep Booking
                 </button>
                 <button
                   type="submit"
                   disabled={submitCancelLoading || !cancelReason.trim()}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {submitCancelLoading ? (
                     <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      Cancelling...
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      <span>Cancelling...</span>
                     </>
                   ) : (
-                    "Confirm Cancellation"
+                    <span>Confirm Cancellation</span>
                   )}
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}
 
       {/* Footer */}
-      <footer className="border-t border-slate-200/80 bg-white py-6 mt-12 text-center text-xs font-bold text-slate-400 print:hidden">
-        © {new Date().getFullYear()} {lang === "hi" ? "कृष्णा ट्रांसपोर्ट & ट्रेवल मैनेजमेंट। वाराणसी, उत्तर प्रदेश।" : "Krishna Transport & Travel Management. Varanasi, UP."}
+      <footer className="border-t border-slate-200/80 bg-white py-4 mt-8 text-center text-xs font-medium text-slate-400">
+        © {new Date().getFullYear()} Krishna Transport & Travels • Operations HQ: Varanasi, UP
       </footer>
+
     </div>
   );
 }

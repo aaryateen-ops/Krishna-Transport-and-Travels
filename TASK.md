@@ -112,6 +112,8 @@
   - Progressive Web App (PWA) installation guide for permanent home-screen app experience.
 - [x] **Supabase WebSocket Realtime Synchronization (`admin-inquiries-live`):**
   - Instantly prepends new incoming bookings without refreshing the page.
+- [x] **Linear & Stripe Design System Architecture:**
+  - Modernized both Admin Operations (`/admin`) and Customer Portal (`/dashboard`) with Linear + Stripe high-contrast aesthetics: hairline micro-borders, razor-sharp monospace badges, Stripe KPI metric tiles, Linear-style segmented controls, minimalist command search, and clean transport slate/navy color harmony.
 
 ---
 

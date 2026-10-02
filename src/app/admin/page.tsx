@@ -47,7 +47,16 @@ import {
   Navigation,
   ShieldCheck,
   Building2,
-  HelpCircle
+  HelpCircle,
+  ArrowRight,
+  Sparkles,
+  Sliders,
+  DollarSign,
+  PhoneCall,
+  Activity,
+  Layers,
+  ChevronRight,
+  Filter
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons";
 
@@ -96,7 +105,7 @@ const VEHICLES_FOR_CALC = [
   { id: "pickup", name: "बोलेरो पिकअप (1.7 टन)", baseRate: 1000, perKm: 30 },
 ];
 
-// Web Audio API Synthesizer for high-pitch order notification chime
+// High-fidelity Web Audio API Synthesizer (Zero asset dependency)
 const playBookingSound = () => {
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -179,6 +188,8 @@ export default function AdminDashboard() {
   const [calcPickup, setCalcPickup] = useState("salarpur");
   const [calcDrop, setCalcDrop] = useState("lanka");
   const [calcVehicle, setCalcVehicle] = useState("tata-ace");
+  const [calcHelpers, setCalcHelpers] = useState(1);
+  const [calcIsRoundTrip, setCalcIsRoundTrip] = useState(false);
 
   // Load sound & drivers from localStorage
   useEffect(() => {
@@ -528,1016 +539,1187 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
     });
   }, [inquiries, orderFilter, searchTerm]);
 
-  // Statistics
-  const pendingCount = inquiries.filter((i) => i.status === "pending").length;
-  const contactedCount = inquiries.filter((i) => i.status === "contacted").length;
-  const assignedCount = inquiries.filter((i) => i.status === "assigned" || i.status === "in_transit").length;
-  const completedCount = inquiries.filter((i) => i.status === "completed").length;
-  const cancelledCount = inquiries.filter((i) => i.status === "cancelled").length;
-
-  const totalQuotedAmount = useMemo(() => {
-    return inquiries.reduce((sum, item) => {
-      const amt = item.quoted_amount ? Number(item.quoted_amount) : 0;
-      return sum + (isNaN(amt) ? 0 : amt);
-    }, 0);
+  // Aggregate Metrics for Stripe-style KPI widgets
+  const stats = useMemo(() => {
+    const total = inquiries.length;
+    const pending = inquiries.filter((i) => i.status === "pending").length;
+    const contacted = inquiries.filter((i) => i.status === "contacted").length;
+    const assigned = inquiries.filter((i) => i.status === "assigned").length;
+    const completed = inquiries.filter((i) => i.status === "completed").length;
+    const totalQuoted = inquiries.reduce((sum, item) => sum + (Number(item.quoted_amount) || 0), 0);
+    return { total, pending, contacted, assigned, completed, totalQuoted };
   }, [inquiries]);
 
-  // Fare estimation calculation for Rates Tab
-  const calculatedFare = useMemo(() => {
-    const pLoc = LOCATIONS_FOR_CALC.find((l) => l.id === calcPickup) || LOCATIONS_FOR_CALC[0];
-    const dLoc = LOCATIONS_FOR_CALC.find((l) => l.id === calcDrop) || LOCATIONS_FOR_CALC[1];
-    const veh = VEHICLES_FOR_CALC.find((v) => v.id === calcVehicle) || VEHICLES_FOR_CALC[0];
+  // Rate calculator computation
+  const calcResult = useMemo(() => {
+    const pickupObj = LOCATIONS_FOR_CALC.find((l) => l.id === calcPickup) || LOCATIONS_FOR_CALC[0];
+    const dropObj = LOCATIONS_FOR_CALC.find((l) => l.id === calcDrop) || LOCATIONS_FOR_CALC[1];
+    const vehObj = VEHICLES_FOR_CALC.find((v) => v.id === calcVehicle) || VEHICLES_FOR_CALC[1];
 
-    let distance = Math.abs(pLoc.km - dLoc.km);
-    if (distance === 0) distance = 4;
-    else distance = Math.max(distance, 5);
+    let distance = Math.abs(pickupObj.km - dropObj.km);
+    if (distance === 0) distance = 5; // Local within same zone
+    if (calcIsRoundTrip) distance = distance * 2;
 
-    const min = veh.baseRate;
-    const est = veh.baseRate + Math.round(distance * veh.perKm);
+    const baseCost = vehObj.baseRate;
+    const distanceCost = distance * vehObj.perKm;
+    const helperCost = calcHelpers * 350;
+    const totalEstimated = baseCost + distanceCost + helperCost;
+
     return {
       distance,
-      minFare: Math.round(min / 50) * 50,
-      estFare: Math.round(est / 50) * 50,
-      vehicleName: veh.name,
-      pickupName: pLoc.name,
-      dropName: dLoc.name,
+      baseCost,
+      distanceCost,
+      helperCost,
+      totalEstimated,
+      vehicleName: vehObj.name,
+      pickupName: pickupObj.name,
+      dropName: dropObj.name,
     };
-  }, [calcPickup, calcDrop, calcVehicle]);
+  }, [calcPickup, calcDrop, calcVehicle, calcHelpers, calcIsRoundTrip]);
 
   if (checkingSession) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4">
-        <RefreshCw className="w-10 h-10 text-orange-500 animate-spin" />
-        <p className="mt-4 text-sm font-bold text-slate-300">एडमिन सेशन लोड हो रहा है...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-400">
+        <div className="w-10 h-10 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
+        <p className="mt-4 text-xs font-mono font-medium tracking-wider uppercase text-slate-400">
+          Connecting to Operations Suite...
+        </p>
       </div>
     );
   }
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-        <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl max-w-md w-full border border-slate-200 text-center">
-          <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-6 h-6" />
-          </div>
-          <h1 className="font-display font-extrabold text-2xl text-slate-900 mb-2">एडमिन एक्सेस आवश्यक</h1>
-          <p className="text-sm text-slate-500 mb-6">{error || "कृपया रोहित सिंह के ईमेल (rohitsingh0641346@gmail.com) से लॉगिन करें।"}</p>
-          <button
-            onClick={() => router.push("/login")}
-            className="w-full py-3.5 bg-blue-900 hover:bg-blue-800 text-white font-extrabold rounded-xl transition-all shadow-md cursor-pointer"
-          >
-            लॉगिन पेज पर जाएँ
-          </button>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 px-4 text-center">
+        <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-4">
+          <Lock className="w-6 h-6" />
         </div>
+        <h1 className="text-xl font-bold text-white tracking-tight">Access Restricted</h1>
+        <p className="text-sm text-slate-400 mt-2 max-w-sm">
+          This command center is reserved exclusively for Rohit Singh (Super Administrator).
+        </p>
+        <Link
+          href="/login"
+          className="mt-6 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+        >
+          Go to Secure Login
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col lg:flex-row antialiased">
       
-      {/* 🔴 Realtime New Booking Alert Toast / Modal */}
-      {newOrderAlert && (
-        <div className="fixed top-4 left-4 right-4 z-50 max-w-lg mx-auto bg-slate-900 text-white p-4.5 rounded-2xl shadow-2xl border-2 border-orange-500 animate-bounce">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
-                <BellRing className="w-5 h-5 animate-pulse" />
-              </div>
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-orange-400">
-                  नई बुकिंग प्राप्त हुई!
-                </span>
-                <h4 className="font-display font-black text-sm sm:text-base mt-0.5">
-                  {newOrderAlert.full_name} ({newOrderAlert.inquiry_code})
-                </h4>
-                <p className="text-xs text-slate-300 font-medium">
-                  📍 {newOrderAlert.pickup_location} ➔ {newOrderAlert.drop_location}
-                </p>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => setNewOrderAlert(null)}
-              className="text-slate-400 hover:text-white p-1 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="mt-3 flex items-center gap-2 pt-2 border-t border-slate-800">
-            <a
-              href={`tel:${newOrderAlert.phone_number}`}
-              className="flex-1 py-2 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm"
-            >
-              <Phone className="w-3.5 h-3.5" />
-              <span>कॉल ({newOrderAlert.phone_number})</span>
-            </a>
-            <a
-              href={getCustomerWhatsAppUrl(newOrderAlert)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 py-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm"
-            >
-              <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
-              <span>व्हाट्सएप</span>
-            </a>
-          </div>
-        </div>
-      )}
-
-      {/* ======================================================== */}
-      {/* 1. DESKTOP SIDEBAR NAVIGATION (Hidden on mobile)         */}
-      {/* ======================================================== */}
-      <aside className="hidden lg:flex w-64 bg-slate-900 text-white flex-col justify-between shrink-0 p-4 sticky top-0 h-screen border-r border-slate-800 z-30">
-        <div className="flex flex-col gap-6">
-          {/* Brand & Admin Identity */}
-          <div className="flex items-center gap-3 px-2 pt-2">
-            <div className="w-10 h-10 rounded-xl bg-orange-500 text-white font-black flex items-center justify-center text-base shadow-md">
+      {/* 1. LEFT SIDEBAR (Stripe / Linear High-Contrast Aesthetic) */}
+      <aside className="hidden lg:flex w-64 bg-slate-950 text-slate-300 border-r border-slate-800/80 flex-col shrink-0 sticky top-0 h-screen z-40 select-none">
+        
+        {/* Brand / Workspace Header */}
+        <div className="h-16 px-5 border-b border-slate-800/80 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-inner">
               KT
             </div>
             <div>
-              <span className="font-display font-extrabold text-sm text-white block leading-tight">
-                कृष्णा ट्रांसपोर्ट
+              <span className="block font-bold text-xs tracking-tight text-white leading-tight">
+                Krishna Transport
               </span>
-              <span className="text-[11px] text-slate-400 font-semibold block">
-                रोहित सिंह (एडमिन)
+              <span className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                Varanasi Command
               </span>
             </div>
           </div>
-
-          {/* Navigation Links */}
-          <nav className="flex flex-col gap-1.5">
-            {[
-              { id: "dashboard", label: "डैशबोर्ड", icon: LayoutDashboard },
-              { id: "orders", label: "ऑर्डर्स & बुकिंग्स", icon: ClipboardList, badge: pendingCount > 0 ? pendingCount : null },
-              { id: "drivers", label: "ड्राइवर्स & गाड़ियां", icon: Truck },
-              { id: "rates", label: "किराया कैलकुलेटर", icon: Calculator },
-              { id: "settings", label: "सेटिंग्स & प्रोफाइल", icon: Settings },
-            ].map((tab) => {
-              const IconComp = tab.icon;
-              const isActive = activeTab === tab.id;
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as AdminTab)}
-                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    isActive
-                      ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/80"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <IconComp className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </div>
-                  {tab.badge && (
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-900 text-[10px] font-black">
-                      {tab.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Realtime Sync Active" />
         </div>
 
-        {/* Sidebar Footer Controls */}
-        <div className="flex flex-col gap-3 pt-4 border-t border-slate-800">
-          <div className="flex items-center justify-between px-2 text-xs">
-            <span className="text-slate-400 flex items-center gap-1.5 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              लाइव सर्वर
-            </span>
-            <button
-              onClick={toggleSoundMute}
-              className={`p-1.5 rounded-lg border cursor-pointer ${
-                isSoundMuted ? "bg-slate-800 text-slate-500 border-slate-700" : "bg-orange-500/20 text-orange-400 border-orange-500/40"
-              }`}
-              title={isSoundMuted ? "साउंड ऑन करें" : "साउंड म्यूट करें"}
-            >
-              {isSoundMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-            </button>
+        {/* Super Admin Identity Badge */}
+        <div className="px-4 py-3 border-b border-slate-900 bg-slate-900/40">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-center text-xs font-bold">
+              RS
+            </div>
+            <div className="overflow-hidden">
+              <span className="block text-xs font-semibold text-slate-200 truncate">
+                Rohit Singh
+              </span>
+              <span className="block text-[10px] text-slate-400 font-mono truncate">
+                Super Administrator
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Linear-Style Nav Items */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <div className="px-2 pb-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500">
+            Operations
           </div>
 
           <button
-            onClick={handleLogout}
-            className="w-full py-2.5 px-3 bg-slate-800 hover:bg-red-950/40 hover:text-red-400 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-2 border border-slate-700 transition-all cursor-pointer"
+            type="button"
+            onClick={() => setActiveTab("dashboard")}
+            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+              activeTab === "dashboard"
+                ? "bg-slate-800/90 text-white border border-slate-700/60 shadow-xs"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+            }`}
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>लॉगआउट</span>
+            <div className="flex items-center gap-2.5">
+              <LayoutDashboard className="w-4 h-4 text-blue-400" />
+              <span>Dashboard</span>
+            </div>
+            <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">
+              1
+            </kbd>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("orders")}
+            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+              activeTab === "orders"
+                ? "bg-slate-800/90 text-white border border-slate-700/60 shadow-xs"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <ClipboardList className="w-4 h-4 text-amber-400" />
+              <span>Orders & Leads</span>
+            </div>
+            {stats.pending > 0 ? (
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full">
+                {stats.pending}
+              </span>
+            ) : (
+              <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">
+                2
+              </kbd>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("drivers")}
+            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+              activeTab === "drivers"
+                ? "bg-slate-800/90 text-white border border-slate-700/60 shadow-xs"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Users className="w-4 h-4 text-emerald-400" />
+              <span>Fleet & Drivers</span>
+            </div>
+            <span className="text-[10px] font-mono text-slate-500">
+              {drivers.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("rates")}
+            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+              activeTab === "rates"
+                ? "bg-slate-800/90 text-white border border-slate-700/60 shadow-xs"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Calculator className="w-4 h-4 text-indigo-400" />
+              <span>Rate Calculator</span>
+            </div>
+            <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">
+              4
+            </kbd>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("settings")}
+            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+              activeTab === "settings"
+                ? "bg-slate-800/90 text-white border border-slate-700/60 shadow-xs"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Settings className="w-4 h-4 text-slate-400" />
+              <span>Settings</span>
+            </div>
+            <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">
+              5
+            </kbd>
+          </button>
+        </nav>
+
+        {/* Bottom Status & Audio Controls */}
+        <div className="p-3 border-t border-slate-800/80 space-y-2 bg-slate-950">
+          <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px]">
+            <span className="flex items-center gap-1.5 text-slate-400">
+              <Volume2 className="w-3.5 h-3.5 text-slate-400" /> Sound Bell
+            </span>
+            <button
+              type="button"
+              onClick={toggleSoundMute}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                isSoundMuted 
+                  ? "bg-slate-800 text-slate-400 hover:text-white" 
+                  : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+              }`}
+            >
+              {isSoundMuted ? "Muted" : "Active"}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-1">
+            <button
+              type="button"
+              onClick={handleTestSound}
+              className="flex-1 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-lg text-[10px] font-medium transition-colors text-center"
+            >
+              Test Chime
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="px-2.5 py-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg text-[10px] font-medium transition-colors flex items-center gap-1"
+              title="Sign out"
+            >
+              <LogOut className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* ======================================================== */}
-      {/* 2. MAIN CONTENT AREA (Responsive)                        */}
-      {/* ======================================================== */}
-      <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-10">
+      {/* 2. MAIN WORKSPACE */}
+      <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-8">
         
-        {/* Mobile & Desktop Header Top Bar */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-xs h-16 flex items-center justify-between px-4 sm:px-6">
+        {/* Top Navbar */}
+        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+          
+          {/* Breadcrumb / Title */}
           <div className="flex items-center gap-3">
-            {/* Mobile Branding */}
             <div className="lg:hidden flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-orange-500 text-white font-black flex items-center justify-center text-xs shadow-sm">
+              <div className="w-7 h-7 rounded-md bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
                 KT
               </div>
-              <span className="font-display font-extrabold text-sm text-slate-900">
-                कृष्णा एडमिन
-              </span>
             </div>
-
-            {/* Desktop Breadcrumb Heading */}
-            <div className="hidden lg:flex items-center gap-2 text-xs font-bold text-slate-500">
-              <span>एडमिन पैनल</span>
-              <span>/</span>
-              <span className="text-slate-900 capitalize font-extrabold">
-                {activeTab === "dashboard" ? "डैशबोर्ड ओवरव्यू" :
-                 activeTab === "orders" ? "ऑर्डर्स & बुकिंग्स" :
-                 activeTab === "drivers" ? "ड्राइवर्स & गाड़ियां" :
-                 activeTab === "rates" ? "किराया कैलकुलेटर" : "सेटिंग्स"}
-              </span>
+            <div>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                <span className="hidden sm:inline">Operations</span>
+                <ChevronRight className="w-3 h-3 hidden sm:inline text-slate-400" />
+                <span className="font-semibold text-slate-900 capitalize">{activeTab}</span>
+              </div>
             </div>
           </div>
 
-          {/* Quick Header Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleTestSound}
-              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-200 cursor-pointer"
-              title="घंटी टेस्ट करें"
-            >
-              <Bell className="w-3.5 h-3.5 text-orange-500" />
-              <span className="hidden sm:inline">टेस्ट घंटी</span>
-            </button>
+          {/* Top Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Realtime Live Pulse */}
+            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Realtime Live</span>
+            </div>
 
+            {/* Sound Toggle (Mobile / Quick) */}
             <button
+              type="button"
               onClick={toggleSoundMute}
-              className={`p-2 rounded-xl transition-all border cursor-pointer lg:hidden ${
-                isSoundMuted ? "bg-slate-100 text-slate-400 border-slate-200" : "bg-orange-50 text-orange-600 border-orange-200"
-              }`}
+              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+              title={isSoundMuted ? "Unmute Sound" : "Mute Sound"}
             >
-              {isSoundMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              {isSoundMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-emerald-600" />}
             </button>
 
+            {/* Refresh Button */}
             <button
+              type="button"
               onClick={handleRefresh}
               disabled={refreshLoading}
-              className="p-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all border border-slate-200 cursor-pointer"
-              title="रीफ्रेश करें"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs transition-colors"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshLoading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${refreshLoading ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">Sync</span>
             </button>
 
-            <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200 text-xs">
-              <span className="w-7 h-7 rounded-full bg-blue-900 text-white font-bold flex items-center justify-center text-[10px]">
-                RS
-              </span>
-              <span className="font-bold text-slate-800">रोहित सिंह</span>
-            </div>
+            <Link
+              href="/"
+              target="_blank"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">View Site</span>
+            </Link>
           </div>
         </header>
 
-        {/* Dynamic Tab Body */}
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          
-          {/* ======================================================== */}
-          {/* TAB 1: DASHBOARD (ओवरव्यू & त्वरित स्थिति)                  */}
-          {/* ======================================================== */}
+        {/* Realtime Floating Notification Banner (Linear Alert Style) */}
+        {newOrderAlert && (
+          <div className="m-4 sm:mx-6 p-3.5 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                <BellRing className="w-4 h-4 animate-bounce" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white">New Booking Received</span>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                    {newOrderAlert.inquiry_code}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  {newOrderAlert.full_name} • {newOrderAlert.pickup_location} → {newOrderAlert.drop_location}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <a
+                href={`tel:${newOrderAlert.phone_number}`}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <Phone className="w-3 h-3" /> Call
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("orders");
+                  setNewOrderAlert(null);
+                }}
+                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition-colors"
+              >
+                View
+              </button>
+              <button
+                type="button"
+                onClick={() => setNewOrderAlert(null)}
+                className="p-1 text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Content Container */}
+        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+
+          {/* TAB 1: DASHBOARD */}
           {activeTab === "dashboard" && (
-            <div className="flex flex-col gap-6">
+            <div className="space-y-6">
               
-              {/* Stat Counters Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
-                <div 
-                  onClick={() => { setActiveTab("orders"); setOrderFilter("pending"); }}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all cursor-pointer border-l-4 border-l-amber-500"
-                >
-                  <span className="text-[10px] font-black uppercase text-amber-700 tracking-wider block mb-1">
-                    नई बुकिंग्स (पेंडिंग)
-                  </span>
-                  <div className="flex items-center justify-between">
-                    <span className="font-display font-black text-3xl text-slate-900">{pendingCount}</span>
-                    <Clock className="w-6 h-6 text-amber-500" />
+              {/* Stripe-Style Metric Widgets */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                {/* Metric 1 */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-colors">
+                  <div className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                    <span>Pending Leads</span>
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
                   </div>
-                  <span className="text-[11px] text-slate-500 font-medium mt-1 block">
-                    तुरंत किराया व ड्राइवर तय करें
-                  </span>
-                </div>
-
-                <div 
-                  onClick={() => { setActiveTab("orders"); setOrderFilter("contacted"); }}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all cursor-pointer border-l-4 border-l-blue-600"
-                >
-                  <span className="text-[10px] font-black uppercase text-blue-700 tracking-wider block mb-1">
-                    कॉल / बातचीत चालू
-                  </span>
-                  <div className="flex items-center justify-between">
-                    <span className="font-display font-black text-3xl text-slate-900">{contactedCount}</span>
-                    <TrendingUp className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <span className="text-[11px] text-slate-500 font-medium mt-1 block">
-                    ग्राहक से फोन पर बात हुई
-                  </span>
-                </div>
-
-                <div 
-                  onClick={() => { setActiveTab("orders"); setOrderFilter("completed"); }}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all cursor-pointer border-l-4 border-l-emerald-600"
-                >
-                  <span className="text-[10px] font-black uppercase text-emerald-700 tracking-wider block mb-1">
-                    डिलीवर ट्रिप्स
-                  </span>
-                  <div className="flex items-center justify-between">
-                    <span className="font-display font-black text-3xl text-slate-900">{completedCount}</span>
-                    <CheckCircle className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <span className="text-[11px] text-slate-500 font-medium mt-1 block">
-                    सफल माल डिलीवरी
-                  </span>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-slate-900">
-                  <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider block mb-1">
-                    कुल तय किराया (₹)
-                  </span>
-                  <div className="flex items-center justify-between">
-                    <span className="font-display font-black text-2xl sm:text-3xl text-slate-900">
-                      ₹{totalQuotedAmount.toLocaleString("en-IN")}
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-mono">
+                      {stats.pending}
                     </span>
-                    <Package className="w-6 h-6 text-slate-700" />
+                    {stats.pending > 0 && (
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                        Action Needed
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[11px] text-slate-500 font-medium mt-1 block">
-                    कुल {inquiries.length} बुकिंग्स का योग
-                  </span>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Awaiting call or quote confirmation
+                  </p>
                 </div>
+
+                {/* Metric 2 */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-colors">
+                  <div className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                    <span>Contacted / Active</span>
+                    <Activity className="w-3.5 h-3.5 text-blue-500" />
+                  </div>
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-mono">
+                      {stats.contacted + stats.assigned}
+                    </span>
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+                      In Discussion
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Fare quoted or driver assigned
+                  </p>
+                </div>
+
+                {/* Metric 3 */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-colors">
+                  <div className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                    <span>Completed Trips</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  </div>
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-mono">
+                      {stats.completed}
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                      Fulfilled
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Safely delivered in Varanasi
+                  </p>
+                </div>
+
+                {/* Metric 4 */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-colors">
+                  <div className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                    <span>Quoted Revenue</span>
+                    <DollarSign className="w-3.5 h-3.5 text-slate-500" />
+                  </div>
+                  <div className="mt-3 flex items-baseline gap-1">
+                    <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-mono">
+                      ₹{stats.totalQuoted.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Total gross pipeline value
+                  </p>
+                </div>
+
               </div>
 
-              {/* Action Required: Urgent Pending Inquiries */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-                <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                  <div>
-                    <h2 className="font-display font-black text-base text-slate-900">
-                      आवश्यक कार्रवाई (तुरंत अटेंड करें)
-                    </h2>
-                    <p className="text-xs text-slate-500">
-                      वे बुकिंग्स जिनका किराया तय करना या ड्राइवर असाइन करना बाकी है।
-                    </p>
+              {/* Pending Queue & Fleet Overview */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Urgent Pending List */}
+                <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900">Urgent Inquiries</h2>
+                      <p className="text-xs text-slate-500">New leads requesting vehicles</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderFilter("pending");
+                        setActiveTab("orders");
+                      }}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    >
+                      View all ({stats.pending}) <ArrowRight className="w-3 h-3" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => { setActiveTab("orders"); setOrderFilter("pending"); }}
-                    className="text-xs font-bold text-blue-900 hover:underline"
-                  >
-                    सभी देखें ({pendingCount})
-                  </button>
-                </div>
 
-                {inquiries.filter((i) => i.status === "pending").length === 0 ? (
-                  <div className="py-8 text-center text-slate-400 text-xs font-medium">
-                    🎉 बहुत बढ़िया! कोई पेंडिंग बुकिंग नहीं है। सभी बुकिंग्स अटेंड हो चुकी हैं।
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    {inquiries.filter((i) => i.status === "pending").slice(0, 4).map((inquiry) => (
-                      <div key={inquiry.id} className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 flex flex-col justify-between gap-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <span className="font-mono font-bold text-xs bg-white px-2 py-0.5 rounded border border-amber-200 text-amber-900">
+                  <div className="divide-y divide-slate-100">
+                    {inquiries.filter((i) => i.status === "pending").slice(0, 5).map((inquiry) => (
+                      <div key={inquiry.id} className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-800">
                               {inquiry.inquiry_code}
                             </span>
-                            <h3 className="font-display font-extrabold text-sm text-slate-900 mt-1">
-                              {inquiry.full_name} ({inquiry.phone_number})
-                            </h3>
+                            <span className="text-xs font-bold text-slate-900">{inquiry.full_name}</span>
+                            <span className="text-xs text-slate-500 font-mono">({inquiry.phone_number})</span>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-medium">
-                            {new Date(inquiry.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                          </span>
+                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                            <span className="font-medium text-slate-800">{inquiry.pickup_location}</span>
+                            <span className="text-slate-400">→</span>
+                            <span className="font-medium text-slate-800">{inquiry.drop_location}</span>
+                            <span className="text-slate-400">•</span>
+                            <span className="text-slate-500">{inquiry.goods_type}</span>
+                          </div>
                         </div>
 
-                        <div className="text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-amber-100">
-                          <p><strong>पिकअप:</strong> {inquiry.pickup_location}</p>
-                          <p><strong>ड्रॉप:</strong> {inquiry.drop_location}</p>
-                          <p><strong>सामान:</strong> {inquiry.goods_type}</p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           <a
                             href={`tel:${inquiry.phone_number}`}
-                            className="flex-1 py-2 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5"
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs flex items-center gap-1.5 transition-colors"
                           >
-                            <Phone className="w-3.5 h-3.5" />
-                            <span>कॉल करें</span>
+                            <Phone className="w-3.5 h-3.5 text-blue-600" /> Call
                           </a>
                           <a
                             href={getCustomerWhatsAppUrl(inquiry)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 py-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5"
+                            className="px-3 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
                           >
-                            <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
-                            <span>व्हाट्सएप</span>
+                            <WhatsAppIcon className="w-3.5 h-3.5 fill-current" /> WhatsApp
                           </a>
                         </div>
                       </div>
                     ))}
-                  </div>
-                )}
-              </div>
 
-              {/* Fleet Quick Status & Quick Links */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-                  <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-                    <h3 className="font-display font-black text-sm text-slate-900">
-                      ड्राइवर फ्लीट स्थिति ({drivers.length} गाड़ियां)
-                    </h3>
-                    <button onClick={() => setActiveTab("drivers")} className="text-xs font-bold text-blue-900 hover:underline">
-                      मैनेज करें
+                    {inquiries.filter((i) => i.status === "pending").length === 0 && (
+                      <div className="p-8 text-center text-slate-500">
+                        <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                        <p className="text-xs font-semibold text-slate-800">All caught up!</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">No pending customer inquiries at the moment.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Fleet Availability Widget */}
+                <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden flex flex-col">
+                  <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900">Fleet Status</h2>
+                      <p className="text-xs text-slate-500">Drivers in Varanasi</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("drivers")}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                    >
+                      Manage
                     </button>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    {drivers.slice(0, 3).map((driver) => (
-                      <div key={driver.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+
+                  <div className="p-4 flex-1 space-y-3">
+                    {drivers.map((driver) => (
+                      <div key={driver.id} className="p-3 rounded-lg border border-slate-100 bg-slate-50/50 flex items-center justify-between">
                         <div>
-                          <span className="font-bold text-slate-900">{driver.name}</span>
-                          <span className="text-slate-500 block text-[11px]">{driver.vehicleType} • {driver.vehicleNumber}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-900">{driver.name}</span>
+                            <span className={`inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                              driver.status === "available"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-blue-50 text-blue-700 border border-blue-200"
+                            }`}>
+                              {driver.status === "available" ? "Available" : "On Duty"}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-500 font-mono mt-0.5 block">
+                            {driver.vehicleType} • {driver.vehicleNumber}
+                          </span>
                         </div>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          driver.status === "available" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-                        }`}>
-                          {driver.status === "available" ? "खाली है" : "ड्यूटी पर"}
-                        </span>
+                        <a
+                          href={`tel:${driver.phone}`}
+                          className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+                          title="Call Driver"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                        </a>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-                  <h3 className="font-display font-black text-sm text-slate-900 mb-2">
-                    त्वरित टूल्स (Quick Actions)
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2.5">
+                  {/* Calculator CTA Card */}
+                  <div className="p-4 border-t border-slate-100 bg-slate-50/50">
                     <button
+                      type="button"
                       onClick={() => setActiveTab("rates")}
-                      className="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left text-xs font-bold text-slate-800 flex flex-col gap-1 cursor-pointer"
+                      className="w-full py-2.5 px-3 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 flex items-center justify-center gap-2 shadow-xs transition-colors"
                     >
-                      <Calculator className="w-5 h-5 text-orange-500" />
-                      <span>किराया कैलकुलेटर</span>
-                      <span className="text-[10px] text-slate-500 font-normal">रूट रेट पता करें</span>
-                    </button>
-
-                    <button
-                      onClick={() => setActiveTab("drivers")}
-                      className="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left text-xs font-bold text-slate-800 flex flex-col gap-1 cursor-pointer"
-                    >
-                      <Plus className="w-5 h-5 text-blue-900" />
-                      <span>नया ड्राइवर जोड़ें</span>
-                      <span className="text-[10px] text-slate-500 font-normal">फ्लीट डायरेक्टरी</span>
+                      <Calculator className="w-4 h-4 text-indigo-600" />
+                      <span>Open Instant Fare Estimator</span>
                     </button>
                   </div>
                 </div>
+
               </div>
 
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 2: ORDERS (ऑर्डर्स & सम्पूर्ण लाइफसाइकिल)             */}
-          {/* ======================================================== */}
+          {/* TAB 2: ORDERS & BOOKINGS (Linear / Stripe Style Table Cards) */}
           {activeTab === "orders" && (
-            <div className="flex flex-col gap-5">
+            <div className="space-y-4">
               
-              {/* Filter Tabs & Search Bar */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { id: "all", label: `सभी (${inquiries.length})` },
-                    { id: "pending", label: `पेंडिंग (${pendingCount})` },
-                    { id: "contacted", label: `कॉल हुई (${contactedCount})` },
-                    { id: "assigned", label: `गाड़ी तय (${assignedCount})` },
-                    { id: "completed", label: `डिलीवर (${completedCount})` },
-                    { id: "cancelled", label: `रद्द (${cancelledCount})` },
-                  ].map((t) => (
+              {/* Controls Bar */}
+              <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+                
+                {/* Search Input (Linear Command Style) */}
+                <div className="relative w-full md:w-80">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search by code, customer, phone, location..."
+                    className="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none rounded-lg text-xs transition-all font-medium"
+                  />
+                  {searchTerm && (
                     <button
-                      key={t.id}
-                      onClick={() => setOrderFilter(t.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                        orderFilter === t.id
-                          ? "bg-slate-900 text-white border-slate-900"
-                          : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Linear-Style Segmented Filter Tabs */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto w-full md:w-auto">
+                  {[
+                    { id: "all", label: "All", count: inquiries.length },
+                    { id: "pending", label: "Pending", count: stats.pending },
+                    { id: "contacted", label: "Contacted", count: stats.contacted },
+                    { id: "assigned", label: "Assigned", count: stats.assigned },
+                    { id: "completed", label: "Completed", count: stats.completed },
+                    { id: "cancelled", label: "Cancelled", count: inquiries.filter((i) => i.status === "cancelled").length },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setOrderFilter(tab.id)}
+                      className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                        orderFilter === tab.id
+                          ? "bg-white text-slate-900 shadow-xs font-semibold"
+                          : "text-slate-500 hover:text-slate-800"
                       }`}
                     >
-                      {t.label}
+                      <span>{tab.label}</span>
+                      <span className={`text-[10px] font-mono px-1 py-0.2 rounded-full ${
+                        orderFilter === tab.id ? "bg-slate-100 text-slate-800" : "text-slate-400"
+                      }`}>
+                        {tab.count}
+                      </span>
                     </button>
                   ))}
                 </div>
 
-                <div className="relative w-full md:max-w-xs">
-                  <input
-                    type="text"
-                    placeholder="कोड, नाम, फोन या रूट खोजें..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 rounded-xl text-xs bg-slate-50 text-slate-900 placeholder-slate-400"
-                  />
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-                </div>
               </div>
 
-              {/* Orders Listing */}
-              {filteredInquiries.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 text-sm">
-                  कोई बुकिंग नहीं मिली।
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {filteredInquiries.map((inquiry) => {
-                    const localForm = formStates[inquiry.id] || {
-                      quoted_amount: "",
-                      driver_name: "",
-                      driver_phone: "",
-                      vehicle_number: "",
-                      status: "pending",
-                      cancellation_reason: "",
-                    };
-                    const isUpdating = updatingId === inquiry.id;
-                    const isSaved = savedSuccessId === inquiry.id;
+              {/* Inquiries List */}
+              <div className="space-y-3">
+                {filteredInquiries.map((inquiry) => {
+                  const state = formStates[inquiry.id] || {
+                    quoted_amount: "",
+                    driver_name: "",
+                    driver_phone: "",
+                    vehicle_number: "",
+                    status: inquiry.status || "pending",
+                    cancellation_reason: "",
+                  };
 
-                    let statusBorder = "border-l-[6px] border-l-amber-500";
-                    if (inquiry.status === "contacted") statusBorder = "border-l-[6px] border-l-blue-600";
-                    else if (inquiry.status === "assigned" || inquiry.status === "in_transit") statusBorder = "border-l-[6px] border-l-purple-600";
-                    else if (inquiry.status === "completed") statusBorder = "border-l-[6px] border-l-emerald-600";
-                    else if (inquiry.status === "cancelled") statusBorder = "border-l-[6px] border-l-red-600";
+                  const isSaved = savedSuccessId === inquiry.id;
+                  const isUpdating = updatingId === inquiry.id;
 
-                    return (
-                      <div
-                        key={inquiry.id}
-                        className={`bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 transition-all flex flex-col gap-4 ${statusBorder}`}
-                      >
-                        {/* Top Meta Line */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono font-black text-xs px-2.5 py-1 bg-slate-100 text-slate-900 rounded-lg border border-slate-200 flex items-center gap-1.5">
-                              {inquiry.inquiry_code}
-                              <a 
-                                href={`/track/${inquiry.inquiry_code}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="लाइव ट्रैकिंग पर्ची खोलें"
-                                className="text-slate-400 hover:text-slate-900"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
-                            </span>
+                  return (
+                    <div
+                      key={inquiry.id}
+                      className="bg-white border border-slate-200/80 hover:border-slate-300 rounded-xl shadow-xs transition-colors overflow-hidden"
+                    >
+                      {/* Card Header Strip */}
+                      <div className="px-4 py-3 bg-slate-50/60 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs">
+                            {inquiry.inquiry_code}
+                          </span>
+                          <span className="text-slate-500 flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                            {new Date(inquiry.created_at).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })}
+                          </span>
+                        </div>
 
-                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
-                              inquiry.status === "pending" ? "bg-amber-100 text-amber-800" :
-                              inquiry.status === "contacted" ? "bg-blue-100 text-blue-800" :
-                              inquiry.status === "assigned" ? "bg-purple-100 text-purple-800" :
-                              inquiry.status === "in_transit" ? "bg-indigo-100 text-indigo-800" :
-                              inquiry.status === "completed" ? "bg-emerald-100 text-emerald-800" :
-                              "bg-red-100 text-red-800"
-                            }`}>
-                              {inquiry.status === "pending" ? "पेंडिंग" :
-                               inquiry.status === "contacted" ? "कॉल हुई" :
-                               inquiry.status === "assigned" ? "गाड़ी तय" :
-                               inquiry.status === "in_transit" ? "रास्ते में" :
-                               inquiry.status === "completed" ? "डिलीवर" : "रद्द"}
-                            </span>
-
-                            <span className="text-[11px] text-slate-400 font-medium">
-                              {new Date(inquiry.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
-                            </span>
-                          </div>
+                        {/* Status Chip (Stripe Style) */}
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                            state.status === "completed"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : state.status === "assigned"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : state.status === "contacted"
+                              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                              : state.status === "cancelled"
+                              ? "bg-rose-50 text-rose-700 border-rose-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200"
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              state.status === "completed"
+                                ? "bg-emerald-500"
+                                : state.status === "cancelled"
+                                ? "bg-rose-500"
+                                : "bg-amber-500 animate-pulse"
+                            }`} />
+                            <span className="capitalize">{state.status}</span>
+                          </span>
 
                           <button
+                            type="button"
                             onClick={() => handleDelete(inquiry.id)}
-                            disabled={isPending}
-                            className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                            title="डिलीट करें"
+                            className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                            title="Delete Lead"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
+                      </div>
 
-                        {/* Customer Row with 1-Tap Golden Buttons */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-slate-900 text-white font-extrabold flex items-center justify-center shrink-0 text-xs shadow-xs">
-                              {inquiry.full_name ? inquiry.full_name.slice(0, 2) : "KT"}
+                      {/* Main Card Body */}
+                      <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                        
+                        {/* Column 1: Customer & Route (5 cols) */}
+                        <div className="lg:col-span-5 space-y-3">
+                          <div>
+                            <div className="flex items-baseline gap-2">
+                              <h3 className="font-bold text-slate-900 text-sm">{inquiry.full_name}</h3>
+                              <a
+                                href={`tel:${inquiry.phone_number}`}
+                                className="text-xs font-mono font-medium text-blue-600 hover:underline"
+                              >
+                                {inquiry.phone_number}
+                              </a>
+                            </div>
+                            {inquiry.email && (
+                              <span className="text-[11px] text-slate-400 block font-mono mt-0.5">
+                                {inquiry.email}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Route Flow (Linear Minimalist Node Style) */}
+                          <div className="space-y-2 border-l-2 border-slate-200 pl-3 ml-1.5 py-0.5">
+                            <div>
+                              <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 font-bold block">
+                                Pickup Point
+                              </span>
+                              <span className="text-xs font-medium text-slate-800">
+                                {inquiry.pickup_location}
+                              </span>
                             </div>
                             <div>
-                              <h3 className="font-display font-extrabold text-sm sm:text-base text-slate-900 leading-tight">
-                                {inquiry.full_name}
-                              </h3>
-                              <span className="text-xs text-slate-600 font-bold block mt-0.5">
-                                📞 {inquiry.phone_number}
+                              <span className="text-[10px] font-mono uppercase tracking-wider text-blue-600 font-bold block">
+                                Drop Destination
+                              </span>
+                              <span className="text-xs font-medium text-slate-800">
+                                {inquiry.drop_location}
                               </span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={`tel:${inquiry.phone_number}`}
-                              className="flex-1 sm:flex-none px-4 py-2.5 bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-xs"
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                              <span>कॉल</span>
-                            </a>
-
-                            <a
-                              href={getCustomerWhatsAppUrl(inquiry)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 sm:flex-none px-4 py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-xs"
-                            >
-                              <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
-                              <span>व्हाट्सएप</span>
-                            </a>
-                          </div>
-                        </div>
-
-                        {/* Route & Cargo Info */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                          <div className="bg-slate-50 border border-slate-150 p-3 rounded-xl">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">
-                              📍 रूट (Route)
+                          {/* Shipment details */}
+                          <div className="flex flex-wrap gap-2 text-[11px] text-slate-600 pt-1">
+                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+                              📦 {inquiry.goods_type}
                             </span>
-                            <p className="font-bold text-slate-900">
-                              <span className="text-emerald-700">पिकअप:</span> {inquiry.pickup_location}
-                            </p>
-                            <p className="font-bold text-slate-900 mt-1">
-                              <span className="text-red-600">ड्रॉप:</span> {inquiry.drop_location}
-                            </p>
-                          </div>
-
-                          <div className="bg-slate-50 border border-slate-150 p-3 rounded-xl">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">
-                              📅 शेड्यूल
+                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+                              📅 {inquiry.booking_date} ({inquiry.booking_time})
                             </span>
-                            <p className="font-bold text-slate-900">{inquiry.booking_date}</p>
-                            <p className="text-slate-600 font-medium mt-0.5">{inquiry.booking_time}</p>
-                          </div>
-
-                          <div className="bg-slate-50 border border-slate-150 p-3 rounded-xl">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">
-                              📦 सामान व वजन
-                            </span>
-                            <p className="font-bold text-slate-900">{inquiry.goods_type}</p>
-                            {inquiry.weight ? (
-                              <p className="text-blue-900 font-bold mt-0.5">वजन: {inquiry.weight}</p>
-                            ) : (
-                              <p className="text-slate-400 italic mt-0.5">वजन तय नहीं</p>
-                            )}
-                          </div>
-                        </div>
-
-                        {inquiry.notes && (
-                          <div className="bg-amber-50/70 border border-amber-200/80 p-3 rounded-xl text-xs text-amber-900 font-medium">
-                            <strong>नोट:</strong> {inquiry.notes}
-                          </div>
-                        )}
-
-                        {/* Operational Edit Box: Fare, Driver, Status */}
-                        <div className="bg-slate-150/60 rounded-2xl p-4 border border-slate-200 flex flex-col gap-3">
-                          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                            <span className="text-[11px] font-extrabold text-slate-800">
-                              किराया व ड्राइवर असाइनमेंट (ग्राहक लाइव देखता है)
-                            </span>
-                            {isSaved && (
-                              <span className="text-emerald-700 font-bold text-xs flex items-center gap-1 animate-pulse">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                सेव हो गया!
+                            {inquiry.vehicle_preference && (
+                              <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                🚚 {inquiry.vehicle_preference}
                               </span>
                             )}
                           </div>
 
-                          {/* Quick Auto-fill Driver Selector */}
+                          {inquiry.notes && (
+                            <p className="text-xs text-slate-500 italic bg-slate-50 p-2 rounded-lg border border-slate-100">
+                              "{inquiry.notes}"
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Column 2: Driver & Assignment (4 cols) */}
+                        <div className="lg:col-span-4 space-y-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/60">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider font-mono">
+                              Driver & Fare Control
+                            </span>
+                            <span className="text-[10px] text-slate-400">Preset selector</span>
+                          </div>
+
+                          {/* Driver Quick Preset Dropdown */}
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-600 mb-1">
-                              फ्लीट से ड्राइवर चुनें (ऑटो-फिल):
+                            <label className="text-[10px] font-semibold text-slate-500 block mb-1">
+                              Select from Fleet Phonebook:
                             </label>
                             <select
                               onChange={(e) => {
                                 if (e.target.value) handleAssignDriverPreset(inquiry.id, e.target.value);
                               }}
                               defaultValue=""
-                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800"
+                              className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:border-blue-500"
                             >
-                              <option value="">-- ड्राइवर लिस्ट से चुनें या नीचे टाइप करें --</option>
+                              <option value="">-- Choose Driver --</option>
                               {drivers.map((d) => (
                                 <option key={d.id} value={d.id}>
-                                  {d.name} ({d.vehicleType} - {d.vehicleNumber}) [{d.status === "available" ? "उपलब्ध" : "ड्यूटी पर"}]
+                                  {d.name} ({d.vehicleType})
                                 </option>
                               ))}
                             </select>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
+                          {/* In-place Driver Inputs */}
+                          <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-600 mb-1">तय किराया (₹)</label>
-                              <input
-                                type="number"
-                                placeholder="उदा. 800"
-                                value={localForm.quoted_amount}
-                                onChange={(e) => handleFormChange(inquiry.id, "quoted_amount", e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold text-slate-900"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-[10px] font-bold text-slate-600 mb-1">स्थिति (Status)</label>
-                              <select
-                                value={localForm.status}
-                                onChange={(e) => handleFormChange(inquiry.id, "status", e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold text-slate-900"
-                              >
-                                <option value="pending">पेंडिंग (Pending)</option>
-                                <option value="contacted">बातचीत हुई (Contacted)</option>
-                                <option value="assigned">गाड़ी तय (Assigned)</option>
-                                <option value="in_transit">रास्ते में (In Transit)</option>
-                                <option value="completed">डिलीवर (Completed)</option>
-                                <option value="cancelled">रद्द (Cancelled)</option>
-                              </select>
-                            </div>
-
-                            <div>
-                              <label className="block text-[10px] font-bold text-slate-600 mb-1">ड्राइवर का नाम</label>
+                              <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                                Driver Name
+                              </label>
                               <input
                                 type="text"
-                                placeholder="उदा. सोनू यादव"
-                                value={localForm.driver_name}
+                                value={state.driver_name}
                                 onChange={(e) => handleFormChange(inquiry.id, "driver_name", e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium text-slate-900"
+                                placeholder="Driver Name"
+                                className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium"
                               />
                             </div>
-
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-600 mb-1">ड्राइवर फोन</label>
+                              <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                                Driver Phone
+                              </label>
                               <input
-                                type="tel"
-                                placeholder="10 डिजिट नंबर"
-                                value={localForm.driver_phone}
+                                type="text"
+                                value={state.driver_phone}
                                 onChange={(e) => handleFormChange(inquiry.id, "driver_phone", e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium text-slate-900"
+                                placeholder="10 Digits"
+                                className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs font-mono"
                               />
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end pt-1">
+                          {/* Quoted Fare & Vehicle Number */}
+                          <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-600 mb-1">गाड़ी नंबर प्लेट</label>
+                              <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                                Quoted Fare (₹)
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono">₹</span>
+                                <input
+                                  type="number"
+                                  value={state.quoted_amount}
+                                  onChange={(e) => handleFormChange(inquiry.id, "quoted_amount", e.target.value)}
+                                  placeholder="0.00"
+                                  className="w-full pl-5 pr-2 py-1 bg-white border border-slate-200 rounded text-xs font-mono font-bold text-slate-900"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                                Vehicle Plate
+                              </label>
                               <input
                                 type="text"
-                                placeholder="उदा. UP 65 BT 4512"
-                                value={localForm.vehicle_number}
+                                value={state.vehicle_number}
                                 onChange={(e) => handleFormChange(inquiry.id, "vehicle_number", e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold text-slate-900 uppercase"
+                                placeholder="UP 65 BT 1234"
+                                className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs font-mono uppercase"
                               />
                             </div>
+                          </div>
 
-                            {/* Driver WhatsApp Forward Button */}
-                            {localForm.driver_phone ? (
+                          {/* Status Dropdown */}
+                          <div>
+                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                              Booking Lifecycle Status
+                            </label>
+                            <select
+                              value={state.status}
+                              onChange={(e) => handleFormChange(inquiry.id, "status", e.target.value)}
+                              className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs font-semibold text-slate-800"
+                            >
+                              <option value="pending">Pending (शुरुआती लीड)</option>
+                              <option value="contacted">Contacted (बातचीत जारी)</option>
+                              <option value="assigned">Assigned (गाड़ी तय)</option>
+                              <option value="completed">Completed (काम पूरा)</option>
+                              <option value="cancelled">Cancelled (रद्द)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Column 3: Actions & WhatsApp Dispatch (3 cols) */}
+                        <div className="lg:col-span-3 space-y-2 flex flex-col justify-between h-full">
+                          
+                          <div className="space-y-1.5">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold block">
+                              1-Tap Dispatch & Contact
+                            </span>
+
+                            {/* Customer Call */}
+                            <a
+                              href={`tel:${inquiry.phone_number}`}
+                              className="w-full py-1.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg shadow-xs flex items-center justify-center gap-1.5 transition-colors"
+                            >
+                              <Phone className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Call Customer</span>
+                            </a>
+
+                            {/* Customer WhatsApp */}
+                            <a
+                              href={getCustomerWhatsAppUrl(inquiry)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full py-1.5 px-3 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold rounded-lg shadow-xs flex items-center justify-center gap-1.5 transition-colors"
+                            >
+                              <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
+                              <span>WhatsApp Customer</span>
+                            </a>
+
+                            {/* Driver Duty WhatsApp Forwarder */}
+                            {state.driver_phone ? (
                               <a
-                                href={getDriverWhatsAppUrl(inquiry, localForm.driver_phone, localForm.quoted_amount)}
+                                href={getDriverWhatsAppUrl(inquiry, state.driver_phone, state.quoted_amount)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-full py-2.5 px-3 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs"
+                                className="w-full py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs flex items-center justify-center gap-1.5 transition-colors"
                               >
-                                <Send className="w-3.5 h-3.5" />
-                                <span>ड्राइवर को पर्ची भेजें</span>
+                                <Send className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Duty Ticket to Driver</span>
                               </a>
                             ) : (
                               <button
                                 type="button"
                                 disabled
-                                className="w-full py-2.5 px-3 bg-slate-200 text-slate-400 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed"
+                                className="w-full py-1.5 px-3 bg-slate-100 text-slate-400 text-xs font-medium rounded-lg border border-slate-200 cursor-not-allowed flex items-center justify-center gap-1.5"
                               >
-                                <span>ड्राइवर फोन डालें</span>
+                                <Send className="w-3.5 h-3.5" />
+                                <span>Assign Driver First</span>
                               </button>
                             )}
 
-                            {/* Save Button */}
+                            {/* Tracking Public Link */}
+                            <Link
+                              href={`/track/${inquiry.inquiry_code}`}
+                              target="_blank"
+                              className="w-full py-1 px-2 text-center text-[11px] font-medium text-slate-500 hover:text-blue-600 flex items-center justify-center gap-1 transition-colors"
+                            >
+                              <span>Customer Tracking View</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </div>
+
+                          {/* Save Changes Button */}
+                          <div className="pt-2">
                             <button
+                              type="button"
                               onClick={() => handleSaveDetails(inquiry.id)}
                               disabled={isUpdating}
-                              className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              className={`w-full py-2 px-3 text-xs font-bold rounded-lg shadow-xs flex items-center justify-center gap-1.5 transition-all ${
+                                isSaved
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-blue-600 hover:bg-blue-500 text-white"
+                              }`}
                             >
                               {isUpdating ? (
-                                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : isSaved ? (
+                                <CheckCircle className="w-3.5 h-3.5" />
                               ) : (
-                                <Save className="w-4 h-4" />
+                                <Save className="w-3.5 h-3.5" />
                               )}
-                              <span>अपडेट सेव करें</span>
+                              <span>{isSaved ? "Saved Successfully" : isUpdating ? "Saving..." : "Save Changes"}</span>
                             </button>
                           </div>
 
-                          {localForm.status === "cancelled" && (
-                            <div className="mt-2">
-                              <label className="block text-[10px] font-bold text-red-600 mb-1">कैंसलेशन कारण लिखें</label>
-                              <input
-                                type="text"
-                                placeholder="उदा. ग्राहक का प्लान बदला"
-                                value={localForm.cancellation_reason}
-                                onChange={(e) => handleFormChange(inquiry.id, "cancellation_reason", e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border border-red-200 bg-white text-xs text-slate-900"
-                              />
-                            </div>
-                          )}
                         </div>
 
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
+                  );
+                })}
+
+                {filteredInquiries.length === 0 && (
+                  <div className="bg-white border border-slate-200/80 rounded-xl p-12 text-center shadow-xs">
+                    <Truck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                    <h3 className="text-sm font-bold text-slate-900">No Inquiries Found</h3>
+                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                      No bookings matching "{searchTerm || orderFilter}". Try changing your search query or filter chip.
+                    </p>
+                  </div>
+                )}
+              </div>
 
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 3: DRIVERS & FLEET (ड्राइवर्स & गाड़ियां)              */}
-          {/* ======================================================== */}
+          {/* TAB 3: FLEET & DRIVERS DIRECTORY */}
           {activeTab === "drivers" && (
-            <div className="flex flex-col gap-5">
+            <div className="space-y-6">
               
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-xl p-4 shadow-xs">
                 <div>
-                  <h2 className="font-display font-black text-lg text-slate-900">
-                    फ्लीट एवं ड्राइवर डायरेक्टरी
-                  </h2>
+                  <h2 className="text-sm font-bold text-slate-900">Fleet Directory & Drivers</h2>
                   <p className="text-xs text-slate-500">
-                    ड्राइवर्स की स्थिति ट्रैक करें और 1-क्लिक में कॉल या ड्यूटी असाइन करें।
+                    Manage active drivers and vehicles in Varanasi. Assigned directly to bookings.
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowAddDriverModal(true)}
-                  className="px-4 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors shrink-0"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>नया ड्राइवर जोड़ें</span>
+                  <Plus className="w-4 h-4" /> Add Driver
                 </button>
               </div>
 
-              {/* Drivers Grid */}
+              {/* Drivers Grid (Linear Team Directory Style) */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {drivers.map((driver) => (
-                  <div key={driver.id} className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 flex flex-col justify-between gap-4">
+                  <div
+                    key={driver.id}
+                    className="bg-white border border-slate-200/80 hover:border-slate-300 rounded-xl p-4 shadow-xs transition-colors flex flex-col justify-between space-y-4"
+                  >
                     <div>
-                      <div className="flex items-start justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 font-bold flex items-center justify-center text-sm">
-                            <Truck className="w-5 h-5 text-slate-700" />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-200">
+                            {driver.name.slice(0, 2)}
                           </div>
                           <div>
-                            <h3 className="font-display font-black text-sm text-slate-900">
-                              {driver.name}
-                            </h3>
-                            <span className="text-xs text-slate-500 font-semibold block">
-                              📞 {driver.phone}
-                            </span>
+                            <h3 className="text-xs font-bold text-slate-900">{driver.name}</h3>
+                            <a
+                              href={`tel:${driver.phone}`}
+                              className="text-xs font-mono text-blue-600 hover:underline"
+                            >
+                              +91 {driver.phone}
+                            </a>
                           </div>
                         </div>
 
+                        {/* Availability Toggle */}
                         <button
-                          onClick={() => deleteDriver(driver.id)}
-                          className="text-slate-300 hover:text-red-600 p-1"
-                          title="हटाएं"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-150 text-xs flex flex-col gap-1 mb-3">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 font-bold">गाड़ी प्रकार:</span>
-                          <span className="font-bold text-slate-800">{driver.vehicleType}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 font-bold">नंबर प्लेट:</span>
-                          <span className="font-bold text-slate-900 font-mono">{driver.vehicleNumber}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500 font-medium">ड्यूटी स्थिति:</span>
-                        <button
+                          type="button"
                           onClick={() => toggleDriverStatus(driver.id)}
-                          className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
                             driver.status === "available"
-                              ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                              : "bg-amber-100 text-amber-800 border border-amber-300"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                              : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                           }`}
                         >
-                          {driver.status === "available" ? "🟢 उपलब्ध (खाली है)" : "🟡 ड्यूटी पर है"}
+                          {driver.status === "available" ? "● Available" : "● On Duty"}
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 mt-1">
-                        <a
-                          href={`tel:${driver.phone}`}
-                          className="py-2 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"
-                        >
-                          <Phone className="w-3.5 h-3.5" />
-                          <span>कॉल करें</span>
-                        </a>
-
-                        <a
-                          href={`https://wa.me/91${driver.phone.replace(/\D/g, "")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="py-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"
-                        >
-                          <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
-                          <span>व्हाट्सएप</span>
-                        </a>
+                      <div className="mt-3 pt-3 border-t border-slate-100 space-y-1 text-xs">
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span className="text-[11px] text-slate-400">Vehicle Type:</span>
+                          <span className="font-medium text-slate-800">{driver.vehicleType}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span className="text-[11px] text-slate-400">Reg Plate:</span>
+                          <span className="font-mono font-bold text-slate-800">{driver.vehicleNumber}</span>
+                        </div>
                       </div>
                     </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-1">
+                        <a
+                          href={`tel:${driver.phone}`}
+                          className="flex-1 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <Phone className="w-3 h-3 text-blue-600" /> Call
+                        </a>
+                        <a
+                          href={`https://wa.me/91${driver.phone}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <WhatsAppIcon className="w-3 h-3 fill-current" /> WhatsApp
+                        </a>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteDriver(driver.id)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
+                        title="Remove Driver"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
                   </div>
                 ))}
               </div>
 
               {/* Add Driver Modal */}
               {showAddDriverModal && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                  <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
-                    <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                      <h3 className="font-display font-black text-base text-slate-900">
-                        नया ड्राइवर जोड़ें
-                      </h3>
-                      <button onClick={() => setShowAddDriverModal(false)} className="text-slate-400 hover:text-slate-700">
-                        <X className="w-5 h-5" />
+                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+                  <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <h3 className="text-sm font-bold text-slate-900">Add New Fleet Driver</h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddDriverModal(false)}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <form onSubmit={handleAddDriver} className="flex flex-col gap-3.5 text-xs">
+                    <form onSubmit={handleAddDriver} className="space-y-3">
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">ड्राइवर का नाम *</label>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                          Driver Full Name *
+                        </label>
                         <input
                           type="text"
                           required
-                          placeholder="उदा. रमेश कुमार"
                           value={newDriverName}
                           onChange={(e) => setNewDriverName(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
+                          placeholder="e.g. Ramesh Yadav"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium outline-none focus:border-blue-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">मोबाइल नंबर *</label>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                          Mobile Number (10 Digits) *
+                        </label>
                         <input
                           type="tel"
                           required
-                          placeholder="10 डिजिट फोन"
                           value={newDriverPhone}
-                          onChange={(e) => setNewDriverPhone(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
+                          onChange={(e) => setNewDriverPhone(e.target.value.replace(/\D/g, ""))}
+                          placeholder="e.g. 9838000000"
+                          maxLength={10}
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-medium outline-none focus:border-blue-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">गाड़ी का प्रकार</label>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                          Vehicle Assigned
+                        </label>
                         <select
                           value={newDriverVehicle}
                           onChange={(e) => setNewDriverVehicle(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium outline-none focus:border-blue-500"
                         >
-                          <option value="टाटा एस (छोटा हाथी)">टाटा एस (छोटा हाथी)</option>
-                          <option value="महिन्द्रा अल्फा (3W)">महिन्द्रा अल्फा (3W लोडर)</option>
-                          <option value="पियाजियो आपे टेम्पो">पियाजियो आपे टेम्पो</option>
-                          <option value="महिन्द्रा बोलेरो पिकअप">महिन्द्रा बोलेरो पिकअप</option>
-                          <option value="14-फीट आयशर">14-फीट आयशर</option>
+                          <option value="टाटा एस (छोटा हाथी)">टाटा एस (छोटा हाथी - 1.2 Ton)</option>
+                          <option value="महिन्द्रा अल्फा (3W)">महिन्द्रा अल्फा (3W - 500 KG)</option>
+                          <option value="पियाजियो आपे टेम्पो">पियाजियो आपे टेम्पो (750 KG)</option>
+                          <option value="महिन्द्रा बोलेरो पिकअप">महिन्द्रा बोलेरो पिकअप (1.7 Ton)</option>
+                          <option value="आयशर 14 फीट">आयशर 14 फीट (4 Ton)</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">गाड़ी नंबर प्लेट</label>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                          Vehicle Registration Number
+                        </label>
                         <input
                           type="text"
-                          placeholder="उदा. UP 65 BT 1234"
                           value={newDriverPlate}
                           onChange={(e) => setNewDriverPlate(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs uppercase"
+                          placeholder="e.g. UP 65 BT 9999"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono uppercase outline-none focus:border-blue-500"
                         />
                       </div>
 
-                      <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                      <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
                         <button
                           type="button"
                           onClick={() => setShowAddDriverModal(false)}
-                          className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
+                          className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50"
                         >
-                          रद्द करें
+                          Cancel
                         </button>
                         <button
                           type="submit"
-                          className="flex-1 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-xl"
+                          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-xs"
                         >
-                          सेव करें
+                          Save Driver
                         </button>
                       </div>
                     </form>
@@ -1548,137 +1730,213 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 4: RATES & FARE CALCULATOR (किराया चार्ट)            */}
-          {/* ======================================================== */}
+          {/* TAB 4: RATE CALCULATOR & OUTSTATION CORRIDORS */}
           {activeTab === "rates" && (
-            <div className="flex flex-col gap-6">
+            <div className="space-y-6">
               
-              <div>
-                <h2 className="font-display font-black text-lg text-slate-900">
-                  किराया चार्ट एवं तुरंत रेट फाइंडर
-                </h2>
-                <p className="text-xs text-slate-500">
-                  ग्राहक को फोन पर सही और पारदर्शी किराया बताने के लिए संदर्भ टूल।
-                </p>
-              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                {/* Rate Estimator (Stripe Pricing Simulator Style) */}
+                <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
+                  <div className="border-b border-slate-100 pb-3">
+                    <h2 className="text-sm font-bold text-slate-900">Varanasi Intra-City Rate Estimator</h2>
+                    <p className="text-xs text-slate-500">Calculate accurate freight based on vehicle, distance & helpers.</p>
+                  </div>
 
-              {/* In-App Quick Estimator */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-                <h3 className="font-display font-black text-sm text-slate-900 mb-4 pb-2 border-b border-slate-100">
-                  तुरंत रेट कैलकुलेट करें (Varanasi Hubs)
-                </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        Pickup Hub
+                      </label>
+                      <select
+                        value={calcPickup}
+                        onChange={(e) => setCalcPickup(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
+                      >
+                        {LOCATIONS_FOR_CALC.map((l) => (
+                          <option key={l.id} value={l.id}>{l.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-4 text-xs">
-                  <div>
-                    <label className="block font-bold text-slate-600 mb-1">पिकअप स्थान</label>
-                    <select
-                      value={calcPickup}
-                      onChange={(e) => setCalcPickup(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 font-semibold"
-                    >
-                      {LOCATIONS_FOR_CALC.map((l) => (
-                        <option key={l.id} value={l.id}>{l.name}</option>
-                      ))}
-                    </select>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        Drop Hub
+                      </label>
+                      <select
+                        value={calcDrop}
+                        onChange={(e) => setCalcDrop(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
+                      >
+                        {LOCATIONS_FOR_CALC.map((l) => (
+                          <option key={l.id} value={l.id}>{l.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-600 mb-1">ड्रॉप स्थान</label>
-                    <select
-                      value={calcDrop}
-                      onChange={(e) => setCalcDrop(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 font-semibold"
-                    >
-                      {LOCATIONS_FOR_CALC.map((l) => (
-                        <option key={l.id} value={l.id}>{l.name}</option>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                      Vehicle Type
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {VEHICLES_FOR_CALC.map((veh) => (
+                        <button
+                          key={veh.id}
+                          type="button"
+                          onClick={() => setCalcVehicle(veh.id)}
+                          className={`p-2.5 rounded-lg border text-left transition-all ${
+                            calcVehicle === veh.id
+                              ? "border-blue-600 bg-blue-50/50 text-blue-900 ring-1 ring-blue-600"
+                              : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                          }`}
+                        >
+                          <span className="block text-xs font-bold">{veh.name.split(" ")[0]} {veh.name.split(" ")[1]}</span>
+                          <span className="block text-[10px] text-slate-500 font-mono mt-0.5">₹{veh.baseRate} base</span>
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block font-bold text-slate-600 mb-1">गाड़ी का प्रकार</label>
-                    <select
-                      value={calcVehicle}
-                      onChange={(e) => setCalcVehicle(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 font-semibold"
-                    >
-                      {VEHICLES_FOR_CALC.map((v) => (
-                        <option key={v.id} value={v.id}>{v.name}</option>
-                      ))}
-                    </select>
+                  {/* Helpers & Trip Type */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        Helpers / Labours (₹350 each)
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {[0, 1, 2, 3].map((num) => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => setCalcHelpers(num)}
+                            className={`flex-1 py-1.5 rounded-lg border text-xs font-bold ${
+                              calcHelpers === num
+                                ? "bg-slate-900 text-white border-slate-900"
+                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            {num === 0 ? "None" : `${num} Helper`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 block">Round Trip</span>
+                        <span className="text-[10px] text-slate-500 block">Return with same cargo</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={calcIsRoundTrip}
+                        onChange={(e) => setCalcIsRoundTrip(e.target.checked)}
+                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
+
                 </div>
 
-                {/* Calculation Output Card */}
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Calculation Receipt Card (Stripe Invoice Summary Style) */}
+                <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex flex-col justify-between space-y-4">
                   <div>
-                    <span className="text-xs text-slate-500 font-medium">
-                      दूरी: ~{calculatedFare.distance} KM | {calculatedFare.pickupName} ➔ {calculatedFare.dropName}
-                    </span>
-                    <h4 className="font-display font-black text-xl text-slate-900 mt-0.5">
-                      अनुमानित किराया: ₹{calculatedFare.minFare} – ₹{calculatedFare.estFare}
-                    </h4>
-                    <span className="text-[11px] text-slate-500">
-                      गाड़ी: {calculatedFare.vehicleName}
-                    </span>
+                    <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900 uppercase font-mono tracking-wider">
+                        Fare Quotation Slip
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        Estimated
+                      </span>
+                    </div>
+
+                    <div className="py-4 space-y-2.5 text-xs">
+                      <div className="flex justify-between text-slate-600">
+                        <span>Route Corridor:</span>
+                        <span className="font-semibold text-slate-900">{calcResult.pickupName} → {calcResult.dropName}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-600">
+                        <span>One-Way Distance:</span>
+                        <span className="font-mono font-semibold text-slate-900">{calcResult.distance} KM</span>
+                      </div>
+                      <div className="flex justify-between text-slate-600">
+                        <span>Base Rate ({calcResult.vehicleName}):</span>
+                        <span className="font-mono text-slate-800">₹{calcResult.baseCost}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-600">
+                        <span>Distance Charge:</span>
+                        <span className="font-mono text-slate-800">₹{calcResult.distanceCost}</span>
+                      </div>
+                      {calcResult.helperCost > 0 && (
+                        <div className="flex justify-between text-slate-600">
+                          <span>Helper Lifting Charge ({calcHelpers}):</span>
+                          <span className="font-mono text-slate-800">₹{calcResult.helperCost}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-200/80 flex items-baseline justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 block">Total Quoted Fare</span>
+                        <span className="text-[10px] text-slate-400">Tolls/Parking actuals extra</span>
+                      </div>
+                      <span className="text-2xl font-bold font-mono text-blue-600">
+                        ₹{calcResult.totalEstimated}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 text-center">
-                    <span className="block text-[10px] text-slate-400 font-bold uppercase">हेल्पर के साथ (वैकल्पिक)</span>
-                    <span className="font-bold text-slate-900 text-sm">
-                      ₹{calculatedFare.estFare + 300} (+₹300/लेबर)
-                    </span>
-                  </div>
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(
+                      `🚚 *कृष्णा ट्रांसपोर्ट - किराया अनुमान*\nरूट: ${calcResult.pickupName} से ${calcResult.dropName} (${calcResult.distance} KM)\nगाड़ी: ${calcResult.vehicleName}\nहेल्पर: ${calcHelpers}\n\n*अनुमानित किराया: ₹${calcResult.totalEstimated}*\n\nरोहित सिंह (+91 70803 60217)`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <WhatsAppIcon className="w-4 h-4 fill-current" />
+                    <span>Share Quote on WhatsApp</span>
+                  </a>
+
                 </div>
+
               </div>
 
-              {/* Standard Intercity Highway Corridors Table */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-                <h3 className="font-display font-black text-sm text-slate-900 mb-3 pb-2 border-b border-slate-100">
-                  पूर्वांचल हाईवे मानक दरें (Standard Outstation Rates)
-                </h3>
+              {/* Standard Highway Corridors Table (Stripe Clean Data Table) */}
+              <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-900">Standard Purvanchal Highway Corridors</h3>
+                  <p className="text-xs text-slate-500">Benchmark rates from Salarpur HQ Depot to adjoining districts.</p>
+                </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]">
-                        <th className="py-2.5">रूट</th>
-                        <th className="py-2.5">दूरी</th>
-                        <th className="py-2.5">छोटा हाथी (टाटा एस)</th>
-                        <th className="py-2.5">महिंद्रा पिकअप</th>
+                    <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-mono text-[10px] uppercase tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Highway Destination</th>
+                        <th className="py-3 px-4">Approx Distance</th>
+                        <th className="py-3 px-4">Tata Ace (1.2T)</th>
+                        <th className="py-3 px-4">Bolero Pickup (1.7T)</th>
+                        <th className="py-3 px-4">Eicher 14ft (4T)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-800">
-                      <tr>
-                        <td className="py-2.5 font-bold">वाराणसी ➔ आज़मगढ़</td>
-                        <td className="py-2.5">104 KM</td>
-                        <td className="py-2.5 font-bold text-blue-900">₹2,400 – ₹2,800</td>
-                        <td className="py-2.5 font-bold text-slate-900">₹3,200 – ₹3,600</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2.5 font-bold">वाराणसी ➔ मिर्ज़ापुर</td>
-                        <td className="py-2.5">65 KM</td>
-                        <td className="py-2.5 font-bold text-blue-900">₹1,600 – ₹1,950</td>
-                        <td className="py-2.5 font-bold text-slate-900">₹2,200 – ₹2,600</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2.5 font-bold">वाराणसी ➔ चंदौली (मुगलसराय)</td>
-                        <td className="py-2.5">32 KM</td>
-                        <td className="py-2.5 font-bold text-blue-900">₹900 – ₹1,200</td>
-                        <td className="py-2.5 font-bold text-slate-900">₹1,400 – ₹1,700</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2.5 font-bold">वाराणसी ➔ जौनपुर</td>
-                        <td className="py-2.5">62 KM</td>
-                        <td className="py-2.5 font-bold text-blue-900">₹1,600 – ₹1,900</td>
-                        <td className="py-2.5 font-bold text-slate-900">₹2,200 – ₹2,500</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2.5 font-bold">वाराणसी ➔ गाज़ीपुर</td>
-                        <td className="py-2.5">78 KM</td>
-                        <td className="py-2.5 font-bold text-blue-900">₹1,900 – ₹2,300</td>
-                        <td className="py-2.5 font-bold text-slate-900">₹2,600 – ₹3,000</td>
-                      </tr>
+                    <tbody className="divide-y divide-slate-100">
+                      {[
+                        { dest: "चंदौली / मुगलसराय (NH 19)", km: "32 KM", ace: "₹1,400", pickup: "₹1,800", eicher: "₹3,500" },
+                        { dest: "भदोही (कालीन नगरी)", km: "48 KM", ace: "₹1,900", pickup: "₹2,400", eicher: "₹4,200" },
+                        { dest: "मिर्ज़ापुर / विंध्याचल", km: "65 KM", ace: "₹2,400", pickup: "₹3,100", eicher: "₹5,200" },
+                        { dest: "जौनपुर (NH 31)", km: "62 KM", ace: "₹2,300", pickup: "₹3,000", eicher: "₹5,000" },
+                        { dest: "गाज़ीपुर (NH 31)", km: "78 KM", ace: "₹2,800", pickup: "₹3,600", eicher: "₹6,000" },
+                        { dest: "आज़मगढ़ (पूर्वांचल लिंक)", km: "104 KM", ace: "₹3,500", pickup: "₹4,500", eicher: "₹7,800" },
+                      ].map((row, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-3 px-4 font-semibold text-slate-900">{row.dest}</td>
+                          <td className="py-3 px-4 font-mono text-slate-500">{row.km}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-slate-800">{row.ace}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-slate-800">{row.pickup}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-slate-800">{row.eicher}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -1687,154 +1945,198 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 5: SETTINGS & PROFILE (सेटिंग्स & प्रोफाइल)            */}
-          {/* ======================================================== */}
+          {/* TAB 5: SETTINGS & SYSTEM CONFIGURATION */}
           {activeTab === "settings" && (
-            <div className="flex flex-col gap-6 max-w-3xl">
+            <div className="space-y-6">
               
-              <div>
-                <h2 className="font-display font-black text-lg text-slate-900">
-                  सिस्टम सेटिंग्स एवं बिजनेस प्रोफाइल
-                </h2>
-                <p className="text-xs text-slate-500">
-                  सूचनाएं, फोन ऐप इंस्टॉलेशन और एडमिन डिटेल्स प्रबंधित करें।
-                </p>
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Admin Profile Details */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
+                  <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900">Administrator Profile</h2>
+                      <p className="text-xs text-slate-500">Verified identity & business credentials.</p>
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Verified
+                    </span>
+                  </div>
 
-              {/* Profile Card */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-                <h3 className="font-display font-black text-sm text-slate-900 mb-3 pb-2 border-b border-slate-100">
-                  मालिक व मुख्य कार्यालय प्रोफाइल
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold">मालिक का नाम</span>
-                    <span className="font-bold text-slate-900">रोहित सिंह</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold">ईमेल पता</span>
-                    <span className="font-bold text-slate-900">rohitsingh0641346@gmail.com</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold">कॉलिंग हॉटलाइन</span>
-                    <span className="font-bold text-slate-900">+91 70803 60217</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold">व्हाट्सएप डेस्क</span>
-                    <span className="font-bold text-slate-900">+91 70716 34535</span>
-                  </div>
-                  <div className="col-span-1 sm:col-span-2">
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold">मुख्य पता</span>
-                    <span className="font-bold text-slate-900">सलारपुर, विद्या विहार इंटर कॉलेज के पीछे, वाराणसी - 221007</span>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                        Super Administrator
+                      </span>
+                      <span className="text-sm font-bold text-slate-900">Rohit Singh</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                        Email Account
+                      </span>
+                      <span className="font-mono text-slate-700">rohitsingh0641346@gmail.com</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                        Calling Hotline
+                      </span>
+                      <span className="font-mono text-slate-700">+91 70803 60217</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                        WhatsApp Dispatch
+                      </span>
+                      <span className="font-mono text-slate-700">+91 70716 34535</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Sound & Alert Preferences */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-                <h3 className="font-display font-black text-sm text-slate-900 mb-3 pb-2 border-b border-slate-100">
-                  ऑडियो अलर्ट व नोटिफिकेशन
-                </h3>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-xs text-slate-900 block">नई बुकिंग ऑडियो घंटी</span>
-                      <span className="text-[11px] text-slate-500">जब भी नई बुकिंग आए तो लाउड चाइम बजे</span>
+                {/* Realtime Audio Chime Synthesizer */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4 flex flex-col justify-between">
+                  <div>
+                    <div className="border-b border-slate-100 pb-3">
+                      <h2 className="text-sm font-bold text-slate-900">Audio & Vibration Alerts</h2>
+                      <p className="text-xs text-slate-500">High-pitch sound synthesizer triggered on new booking arrivals.</p>
                     </div>
-                    <button
-                      onClick={toggleSoundMute}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer ${
-                        isSoundMuted ? "bg-slate-100 text-slate-500 border-slate-200" : "bg-emerald-100 text-emerald-800 border-emerald-300"
-                      }`}
-                    >
-                      {isSoundMuted ? "बंद है" : "चालू है"}
-                    </button>
+
+                    <div className="py-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-slate-900 block">Synthetic Bell Ring</span>
+                          <span className="text-[11px] text-slate-500">Zero network latency, runs directly in browser</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={toggleSoundMute}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition-colors ${
+                            isSoundMuted
+                              ? "bg-slate-100 text-slate-500 border-slate-200"
+                              : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          }`}
+                        >
+                          {isSoundMuted ? "Muted" : "Active"}
+                        </button>
+                      </div>
+
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/60 text-xs text-slate-600 flex items-center justify-between">
+                        <span>Test notification chime right now:</span>
+                        <button
+                          type="button"
+                          onClick={handleTestSound}
+                          className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-xs transition-colors"
+                        >
+                          Play Chime
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <div>
-                      <span className="font-bold text-xs text-slate-900 block">घंटी टेस्ट करें</span>
-                      <span className="text-[11px] text-slate-500">मोबाइल वॉल्यूम और वाइब्रेशन चेक करें</span>
-                    </div>
-                    <button
-                      onClick={handleTestSound}
-                      className="px-3 py-1.5 bg-blue-900 text-white rounded-xl text-xs font-bold"
-                    >
-                      बजाएं
-                    </button>
+                  <p className="text-[11px] text-slate-400">
+                    Preferences are saved automatically in your browser's persistent storage.
+                  </p>
+                </div>
+
+              </div>
+
+              {/* Mobile PWA Installation Guide */}
+              <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
+                <div className="border-b border-slate-100 pb-3">
+                  <h3 className="text-sm font-bold text-slate-900">Install as Full Phone App (PWA)</h3>
+                  <p className="text-xs text-slate-500">How Rohit Singh can install this command suite on any Android phone.</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                  <div className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/50 space-y-1">
+                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">1</span>
+                    <h4 className="font-bold text-slate-900 pt-1">Open in Chrome</h4>
+                    <p className="text-slate-500 text-[11px]">Login once using password or magic link on your phone.</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/50 space-y-1">
+                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">2</span>
+                    <h4 className="font-bold text-slate-900 pt-1">Tap 3 Dots Menu</h4>
+                    <p className="text-slate-500 text-[11px]">Select "Install App" or "Add to Home Screen".</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/50 space-y-1">
+                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">3</span>
+                    <h4 className="font-bold text-slate-900 pt-1">Always Logged In</h4>
+                    <p className="text-slate-500 text-[11px]">Opens like a native Android app without any browser URL bar.</p>
                   </div>
                 </div>
-              </div>
-
-              {/* PWA Phone Setup Instructions */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-                <h3 className="font-display font-black text-sm text-slate-900 mb-2 pb-2 border-b border-slate-100 flex items-center gap-2">
-                  <Smartphone className="w-4 h-4 text-orange-500" />
-                  <span>रोहित सिंह के फोन में ऐप सेट करने का तरीका (PWA)</span>
-                </h3>
-                <ol className="list-decimal list-inside text-xs text-slate-700 leading-relaxed flex flex-col gap-2">
-                  <li>फोन के <strong>Chrome</strong> या <strong>Safari</strong> ब्राउज़र में इस एडमिन लिंक को खोलें।</li>
-                  <li>ब्राउज़र के ऊपर दाईं ओर <strong>तीन बिंदुओं (⋮)</strong> या नीचे <strong>Share</strong> बटन पर टैप करें।</li>
-                  <li>मेनू में <strong>&apos;Add to Home screen&apos; (होम स्क्रीन में जोड़ें)</strong> चुनें।</li>
-                  <li>फोन के होम स्क्रीन पर <strong>&apos;कृष्णा एडमिन&apos;</strong> का ऐप आइकन आ जाएगा।</li>
-                  <li>उस पर टैप करते ही यह बिना ब्राउज़र सर्च बार के असली ऐप की तरह फुल स्क्रीन में खुलेगा और कभी लॉगआउट नहीं होगा!</li>
-                </ol>
-              </div>
-
-              {/* Logout Button */}
-              <div className="pt-2">
-                <button
-                  onClick={handleLogout}
-                  className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-700 font-extrabold text-xs rounded-xl border border-red-200 flex items-center justify-center gap-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>एडमिन पैनल से लॉगआउट करें</span>
-                </button>
               </div>
 
             </div>
           )}
 
         </main>
+
       </div>
 
-      {/* ======================================================== */}
-      {/* 3. MOBILE BOTTOM NAVIGATION BAR (Hidden on desktop)       */}
-      {/* ======================================================== */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-lg h-16 flex items-center justify-around px-2">
-        {[
-          { id: "dashboard", label: "डैशबोर्ड", icon: LayoutDashboard },
-          { id: "orders", label: "ऑर्डर्स", icon: ClipboardList, badge: pendingCount > 0 ? pendingCount : null },
-          { id: "drivers", label: "ड्राइवर्स", icon: Truck },
-          { id: "rates", label: "किराया", icon: Calculator },
-          { id: "settings", label: "सेटिंग्स", icon: Settings },
-        ].map((tab) => {
-          const IconComp = tab.icon;
-          const isActive = activeTab === tab.id;
+      {/* 3. MOBILE ERGONOMIC BOTTOM NAV (Linear / Stripe Mobile Navigation) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1 shadow-lg flex items-center justify-around select-none">
+        
+        <button
+          type="button"
+          onClick={() => setActiveTab("dashboard")}
+          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+            activeTab === "dashboard" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
+          }`}
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Dashboard</span>
+        </button>
 
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`flex flex-col items-center justify-center flex-1 h-full py-1 relative cursor-pointer ${
-                isActive ? "text-orange-600 font-black" : "text-slate-500 font-medium"
-              }`}
-            >
-              <div className="relative">
-                <IconComp className={`w-5 h-5 ${isActive ? "scale-110" : ""}`} />
-                {tab.badge && (
-                  <span className="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-amber-500 text-slate-900 text-[9px] font-black flex items-center justify-center">
-                    {tab.badge}
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] mt-1 leading-none tracking-tight">
-                {tab.label}
-              </span>
-            </button>
-          );
-        })}
+        <button
+          type="button"
+          onClick={() => setActiveTab("orders")}
+          className={`relative flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+            activeTab === "orders" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
+          }`}
+        >
+          <ClipboardList className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Orders</span>
+          {stats.pending > 0 && (
+            <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("drivers")}
+          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+            activeTab === "drivers" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Fleet</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("rates")}
+          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+            activeTab === "rates" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
+          }`}
+        >
+          <Calculator className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Rates</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("settings")}
+          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+            activeTab === "settings" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
+          }`}
+        >
+          <Settings className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Settings</span>
+        </button>
+
       </nav>
 
     </div>
