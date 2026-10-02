@@ -43,8 +43,8 @@ const TESTIMONIALS_DATA: TestimonialItem[] = [
     category: "commercial",
     vehicle: { hi: "पियाजियो आपे लोडर", en: "Piaggio Ape Loader" },
     text: {
-      hi: "रोहित भैया की सर्विस एकदम नंबर वन है! लंका से सिगरा दुकान का माल 25 मिनट में पहुंचा दिया। किराया भी मार्केट से कम और साफ-सुथरा तय किया था, कोई एक्स्ट्रा पैसा नहीं मांगा।",
-      en: "Rohit bhaiya's service is top notch! Delivered my store goods from Lanka to Sigra in just 25 minutes. Clean transparent pricing, no hidden charges."
+      hi: "कृष्णा ट्रांसपोर्ट (रोहित सिंह) की सर्विस एकदम नंबर वन है! लंका से सिगरा दुकान का माल 25 मिनट में पहुंचा दिया। किराया भी मार्केट से कम और साफ-सुथरा तय किया था, कोई एक्स्ट्रा पैसा नहीं मांगा।",
+      en: "Krishna Transport & Travels (Rohit Singh) service is top notch! Delivered my store goods from Lanka to Sigra in just 25 minutes. Clean transparent pricing, no hidden charges."
     },
     date: "हाल ही में (Recently)",
     verified: true

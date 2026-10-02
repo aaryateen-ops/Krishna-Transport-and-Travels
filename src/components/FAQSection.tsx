@@ -72,8 +72,8 @@ const FAQS_DATA: FAQItem[] = [
       en: "Can I reschedule or cancel my booking? Is there any cancellation fee?"
     },
     answer: {
-      hi: "गाड़ी आपके पिकअप पॉइंट पर पहुँचने से पहले बुकिंग कैंसल करना या समय बदलना 100% निःशुल्क है। अगर आपका प्लान बदलता है, तो बस एक बार रोहित भैया को फोन या व्हाट्सएप पर सूचित कर दें।",
-      en: "Rescheduling or cancelling your booking is 100% free before the vehicle arrives at your pickup doorstep. If your plans change, simply inform Rohit bhaiya over phone or WhatsApp with zero penalty."
+      hi: "गाड़ी आपके पिकअप पॉइंट पर पहुँचने से पहले बुकिंग कैंसल करना या समय बदलना 100% निःशुल्क है। अगर आपका प्लान बदलता है, तो बस एक बार रोहित सिंह को फोन या व्हाट्सएप पर सूचित कर दें।",
+      en: "Rescheduling or cancelling your booking is 100% free before the vehicle arrives at your pickup doorstep. If your plans change, simply inform Rohit Singh over phone or WhatsApp with zero penalty."
     }
   },
   {
@@ -168,7 +168,7 @@ export default function FAQSection({ lang }: FAQSectionProps) {
               {lang === "hi" ? "कोई अन्य सवाल या खास जरूरत?" : "Have a specific question?"}
             </span>
             <h3 className="font-display font-black text-lg sm:text-xl text-white mt-1">
-              {lang === "hi" ? "रोहित भैया से सीधे बात करें" : "Talk Directly with Rohit Bhaiya"}
+              {lang === "hi" ? "रोहित सिंह से सीधे बात करें" : "Talk Directly with Rohit Singh"}
             </h3>
             <p className="text-primary-100 text-xs sm:text-sm mt-1 max-w-md">
               {lang === "hi" 
@@ -187,7 +187,7 @@ export default function FAQSection({ lang }: FAQSectionProps) {
             </a>
 
             <a
-              href="https://wa.me/917071634535?text=%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%A4%E0%A5%87%20%E0%A4%B0%E0%A5%8B%E0%A4%B9%E0%A4%BF%E0%A4%A4%20%E0%A4%AD%E0%A5%88%E0%A4%AF%E0%A4%BE!%20%E0%A4%AE%E0%A5%81%E0%A4%97%E0%A5%87%20%E0%A4%97%E0%A4%BE%E0%A4%A1%E0%A4%BC%E0%A5%80%20%E0%A4%AC%E0%A5%81%E0%A4%95%E0%A4%BF%E0%A4%82%E0%A4%97%20%E0%A4%95%E0%A5%87%20%E0%A4%AC%E0%A4%BE%E0%A4%B0%E0%A5%87%20%E0%A4%AE%E0%A5%87%E0%A4%82%20%E0%A4%AA%E0%A5%82%E0%A4%9B%E0%A4%A8%E0%A4%BE%20%E0%A4%B9%E0%A5%88%E0%A5%A4"
+              href="https://wa.me/917071634535?text=%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%A4%E0%A5%87%20%E0%A4%B0%E0%A5%8B%E0%A4%B9%E0%A4%BF%E0%A4%A4%20%E0%A4%B8%E0%A4%BF%E0%A4%82%E0%A4%B9%20%E0%A4%9C%E0%A5%80!%20%E0%A4%AE%E0%A5%81%E0%A4%9D%E0%A5%87%20%E0%A4%97%E0%A4%BE%E0%A4%A1%E0%A4%BC%E0%A5%80%20%E0%A4%AC%E0%A5%81%E0%A4%95%E0%A4%BF%E0%A4%82%E0%A4%97%20%E0%A4%95%E0%A5%87%20%E0%A4%AC%E0%A4%BE%E0%A4%B0%E0%A5%87%20%E0%A4%AE%E0%A5%87%E0%A4%82%20%E0%A4%AA%E0%A5%82%E0%A4%9B%E0%A4%A8%E0%A4%BE%20%E0%A4%B9%E0%A5%88%E0%A5%A4"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 sm:flex-none px-5 py-3.5 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"

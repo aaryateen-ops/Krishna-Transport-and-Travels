@@ -86,18 +86,32 @@
 - [x] **Dynamic Sitemap & Crawl Optimization (`src/app/sitemap.ts`):**
   - Optimized daily crawl frequencies for Googlebot indexing.
 
-### 2.7 Real-Time Admin Command Center & Mobile PWA Power (Completed ✅)
+### 2.7 Enterprise Multi-Tab Admin Command Center & Operations Suite (Completed ✅)
+- [x] **Desktop Left Sidebar & Ergonomic Mobile Bottom Navigation:**
+  - Responsive layout: Fixed collapsible Left Sidebar on Desktop (`lg:flex`) and ergonomic Bottom Navigation bar on Mobile (`lg:hidden fixed bottom-0`).
+  - Strict naming standard: Dedicated to "Rohit Singh" (no informal conversational filler).
+- [x] **Tab 1: Live Command Dashboard:**
+  - Real-time KPI summary (Pending Leads, Contacted, Completed, Total Revenue Quoted).
+  - Urgent pending action queue with 1-tap customer call & WhatsApp.
+  - Active fleet availability widget & quick navigation shortcuts.
+- [x] **Tab 2: Orders & Booking Control:**
+  - Filter chips (All, Pending, Contacted, Assigned, Completed, Cancelled) and instant search.
+  - In-place quick editing: Fare quoting, driver preset dropdown assignment, status progression.
+  - Direct 1-tap duty slip WhatsApp forwarding to assigned driver with customer details and tracking link.
+  - Delete spam inquiries with instant toast feedback.
+- [x] **Tab 3: Drivers & Fleet Directory:**
+  - Managed local fleet phonebook (Sonu Yadav, Vinod Kumar, Pappu Singh, Rajesh Maurya).
+  - Status toggle (`Available` vs `On Duty`), 1-tap call & WhatsApp dialer.
+  - Add new driver modal with automatic persistence.
+- [x] **Tab 4: Rate & Fare Calculator:**
+  - Real-time Varanasi local freight estimator with vehicle, distance, and helper breakdown.
+  - Standard Outstation Corridors rate chart (Azamgarh, Mirzapur, Chandauli, Jaunpur, Ghazipur, Bhadohi).
+- [x] **Tab 5: Settings & Profile:**
+  - Rohit Singh verified administrator profile & credentials manager.
+  - Web Audio API synthetic bell synthesizer with test bell button & mute preference.
+  - Progressive Web App (PWA) installation guide for permanent home-screen app experience.
 - [x] **Supabase WebSocket Realtime Synchronization (`admin-inquiries-live`):**
   - Instantly prepends new incoming bookings without refreshing the page.
-- [x] **Loud Audio Chime Synthesizer & Vibration API:**
-  - High-pitch, crisp order ringtone (Web Audio API) + phone vibration pattern when a lead arrives.
-  - Test ringtone button and audio mute/unmute toggle with localStorage persistence.
-- [x] **Realtime Glowing Alert Banner:**
-  - Flashes urgent notification on screen with 1-tap call and WhatsApp buttons.
-- [x] **1-Tap Driver WhatsApp Forwarding:**
-  - Generates full duty ticket with pickup, drop, goods, fare, and tracking slip link directly to driver's WhatsApp in 1 tap.
-- [x] **Mobile-First Command Cards & Never-Logout Session:**
-  - Big thumb-friendly buttons for Call, WhatsApp, Driver Assignment, Status progression, and Spam deletion.
 
 ---
 
