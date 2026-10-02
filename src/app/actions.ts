@@ -476,5 +476,137 @@ export async function updatePricingSettings(records: PricingRecord[], token: str
   }
 }
 
+// 12. Drivers Fleet Master Management (Persisted in PostgreSQL)
+export interface DriverRecord {
+  id: string;
+  name: string;
+  phone: string;
+  vehicleType: string;
+  vehicleNumber: string;
+  status: "available" | "on_duty";
+}
+
+export async function getDriversList() {
+  try {
+    const { data, error } = await supabase
+      .from("drivers")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Get drivers error:", error);
+      return { success: false, error: error.message };
+    }
+
+    const mapped: DriverRecord[] = (data || []).map((d: any) => ({
+      id: d.id,
+      name: d.name,
+      phone: d.phone,
+      vehicleType: d.vehicle_type,
+      vehicleNumber: d.vehicle_number,
+      status: d.status,
+    }));
+
+    return { success: true, drivers: mapped };
+  } catch (err) {
+    console.error("Get drivers exception:", err);
+    return { success: false, error: "Failed to fetch drivers." };
+  }
+}
+
+export async function createDriverRecord(
+  driverData: { name: string; phone: string; vehicleType: string; vehicleNumber: string; status?: "available" | "on_duty" },
+  token: string
+) {
+  try {
+    if (!token) return { success: false, error: "Session token is required." };
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
+    const id = `drv-${Date.now()}`;
+    const { error } = await supabaseAdmin
+      .from("drivers")
+      .insert({
+        id,
+        name: driverData.name.trim(),
+        phone: driverData.phone.trim(),
+        vehicle_type: driverData.vehicleType,
+        vehicle_number: driverData.vehicleNumber,
+        status: driverData.status || "available",
+      });
+
+    if (error) {
+      console.error("Create driver error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { 
+      success: true, 
+      driver: {
+        id,
+        name: driverData.name.trim(),
+        phone: driverData.phone.trim(),
+        vehicleType: driverData.vehicleType,
+        vehicleNumber: driverData.vehicleNumber,
+        status: driverData.status || "available" as const,
+      } 
+    };
+  } catch (err) {
+    console.error("Create driver exception:", err);
+    return { success: false, error: "Failed to create driver." };
+  }
+}
+
+export async function updateDriverStatusRecord(id: string, status: "available" | "on_duty", token: string) {
+  try {
+    if (!token) return { success: false, error: "Session token is required." };
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("drivers")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to update driver status." };
+  }
+}
+
+export async function deleteDriverRecord(id: string, token: string) {
+  try {
+    if (!token) return { success: false, error: "Session token is required." };
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("drivers")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Delete driver error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("Delete driver exception:", err);
+    return { success: false, error: "Failed to delete driver." };
+  }
+}
+
+
 
 

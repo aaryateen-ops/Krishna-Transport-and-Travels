@@ -1,9 +1,10 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import InquiryForm from "@/components/InquiryForm";
 import HeaderAuth from "@/components/HeaderAuth";
 import FareCalculatorWidget from "@/components/FareCalculatorWidget";
@@ -163,9 +164,41 @@ const areasMap = [
 ];
 
 function HomeContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialService = searchParams.get("service") || "";
   const [lang, setLang] = useLanguage();
+  const [isAdminPreview, setIsAdminPreview] = useState(false);
+
+  useEffect(() => {
+    async function checkAdminPwaRouting() {
+      const isExplicitWebsite = searchParams.get("view") === "website";
+      if (isExplicitWebsite) {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("krishna_allow_website_view", "true");
+        }
+        setIsAdminPreview(true);
+        return;
+      }
+
+      if (typeof window !== "undefined" && sessionStorage.getItem("krishna_allow_website_view") === "true") {
+        setIsAdminPreview(true);
+        return;
+      }
+
+      // If user has admin session, route directly into /admin
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email === "rohitsingh0641346@gmail.com") {
+          router.replace("/admin");
+        }
+      } catch (e) {
+        console.error("Auth check error:", e);
+      }
+    }
+
+    checkAdminPwaRouting();
+  }, [searchParams, router]);
 
   const t = {
     hi: {
@@ -352,6 +385,29 @@ function HomeContent() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Admin Preview Return Banner */}
+      {isAdminPreview && (
+        <aside className="bg-slate-950 text-white text-xs px-4 py-2.5 flex items-center justify-between z-50 border-b border-slate-800 sticky top-0 shadow-lg print:hidden">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="font-semibold text-slate-200">
+              रोहित सिंह (Super Admin) - वेबसाइट प्रिव्यू मोड
+            </span>
+          </div>
+          <Link
+            href="/admin"
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                sessionStorage.removeItem("krishna_allow_website_view");
+              }
+            }}
+            className="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold text-white flex items-center gap-1.5 transition-colors shadow-xs"
+          >
+            <span>← एडमिन पोर्टल पर वापस जाएं (Back to Admin)</span>
+          </Link>
+        </aside>
+      )}
+
       {/* 0. Live Dispatch Command Bar */}
       <aside aria-label="Live Dispatch Status" className="bg-primary-950 text-slate-200 text-xs border-b border-primary-900/60 px-4 py-2 print:hidden">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">

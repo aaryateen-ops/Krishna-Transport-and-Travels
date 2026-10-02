@@ -16,6 +16,10 @@ import {
   getPricingSettings,
   updatePricingSettings,
   PricingRecord,
+  getDriversList,
+  createDriverRecord,
+  updateDriverStatusRecord,
+  deleteDriverRecord,
   OperationalUpdateData 
 } from "@/app/actions";
 import { 
@@ -194,8 +198,8 @@ export default function AdminDashboard() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [savedSuccessId, setSavedSuccessId] = useState<string | null>(null);
 
-  // Drivers Fleet Directory State (persisted locally)
-  const [drivers, setDrivers] = useState<DriverItem[]>(DEFAULT_DRIVERS);
+  // Drivers Fleet Directory State (persisted in Supabase & local cache)
+  const [drivers, setDrivers] = useState<DriverItem[]>([]);
   const [showAddDriverModal, setShowAddDriverModal] = useState(false);
   const [newDriverName, setNewDriverName] = useState("");
   const [newDriverPhone, setNewDriverPhone] = useState("");
@@ -249,10 +253,10 @@ export default function AdminDashboard() {
     if (mutedPref === "true") setIsSoundMuted(true);
 
     const savedDrivers = localStorage.getItem("krishna_admin_drivers_list");
-    if (savedDrivers) {
+    if (savedDrivers !== null) {
       try {
         const parsed = JSON.parse(savedDrivers);
-        if (Array.isArray(parsed) && parsed.length > 0) setDrivers(parsed);
+        if (Array.isArray(parsed)) setDrivers(parsed);
       } catch (e) {
         console.error("Error loading drivers:", e);
       }
@@ -340,6 +344,13 @@ export default function AdminDashboard() {
             setCustomBaseRate(defaultV.baseRate);
             setCustomPerKm(defaultV.perKm);
           }
+        }
+
+        // Fetch drivers fleet from Supabase PostgreSQL
+        const driverRes = await getDriversList();
+        if (driverRes.success && driverRes.drivers) {
+          setDrivers(driverRes.drivers);
+          localStorage.setItem("krishna_admin_drivers_list", JSON.stringify(driverRes.drivers));
         }
       } catch (err) {
         console.error("Admin verification exception:", err);
@@ -452,6 +463,11 @@ export default function AdminDashboard() {
       }));
       setVehicleRates(mapped);
     }
+    const driverRes = await getDriversList();
+    if (driverRes.success && driverRes.drivers) {
+      setDrivers(driverRes.drivers);
+      localStorage.setItem("krishna_admin_drivers_list", JSON.stringify(driverRes.drivers));
+    }
     setRefreshLoading(false);
   };
 
@@ -540,21 +556,27 @@ export default function AdminDashboard() {
     }
   };
 
-  // Add new driver to local fleet directory
-  const handleAddDriver = (e: React.FormEvent) => {
+  // Add new driver to database & local fleet directory
+  const handleAddDriver = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDriverName || !newDriverPhone) {
       alert("Please enter driver name and phone number.");
       return;
     }
-    const newEntry: DriverItem = {
-      id: `d-${Date.now()}`,
+    const payload = {
       name: newDriverName.trim(),
       phone: newDriverPhone.trim(),
       vehicleType: newDriverVehicle,
       vehicleNumber: newDriverPlate.trim() || "UP 65 BT ----",
-      status: "available",
+      status: "available" as const,
     };
+
+    const res = await createDriverRecord(payload, token);
+    const newEntry: DriverItem = res.success && res.driver ? res.driver : {
+      id: `d-${Date.now()}`,
+      ...payload,
+    };
+
     const updated = [newEntry, ...drivers];
     setDrivers(updated);
     localStorage.setItem("krishna_admin_drivers_list", JSON.stringify(updated));
@@ -564,19 +586,26 @@ export default function AdminDashboard() {
     setShowAddDriverModal(false);
   };
 
-  const toggleDriverStatus = (id: string) => {
+  const toggleDriverStatus = async (id: string) => {
+    const target = drivers.find((d) => d.id === id);
+    if (!target) return;
+    const nextStatus = target.status === "available" ? ("on_duty" as const) : ("available" as const);
+
     const updated = drivers.map((d) => 
-      d.id === id ? { ...d, status: d.status === "available" ? "on_duty" as const : "available" as const } : d
+      d.id === id ? { ...d, status: nextStatus } : d
     );
     setDrivers(updated);
     localStorage.setItem("krishna_admin_drivers_list", JSON.stringify(updated));
+
+    await updateDriverStatusRecord(id, nextStatus, token);
   };
 
-  const deleteDriver = (id: string) => {
-    if (window.confirm("Remove driver from fleet list?")) {
+  const deleteDriver = async (id: string) => {
+    if (window.confirm("क्या आप वाकई इस ड्राइवर को फ्लीट लिस्ट से हमेशा के लिए हटाना चाहते हैं?")) {
       const updated = drivers.filter((d) => d.id !== id);
       setDrivers(updated);
       localStorage.setItem("krishna_admin_drivers_list", JSON.stringify(updated));
+      await deleteDriverRecord(id, token);
     }
   };
 
@@ -1124,12 +1153,17 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
             </button>
 
             <Link
-              href="/"
-              target="_blank"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors"
+              href="/?view=website"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  sessionStorage.setItem("krishna_allow_website_view", "true");
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors"
+              title="Open website preview mode"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Live Website</span>
+              <Globe className="w-3.5 h-3.5 text-blue-400" />
+              <span>वेबसाइट देखें</span>
             </Link>
           </div>
         </header>
@@ -1358,31 +1392,47 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                     </div>
 
                     <div className="divide-y divide-slate-100">
-                      {inquiries.slice(0, 6).map((inquiry) => (
-                        <div key={inquiry.id} className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-800">
-                                {inquiry.inquiry_code}
-                              </span>
-                              <span className="text-xs font-bold text-slate-900">{inquiry.full_name}</span>
-                              
-                              {/* Status Chip */}
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-semibold border ${
-                                inquiry.status === "completed"
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                  : inquiry.status === "contacted"
-                                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : inquiry.status === "assigned"
-                                  ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                                  : inquiry.status === "cancelled"
-                                  ? "bg-rose-50 text-rose-700 border-rose-200"
-                                  : "bg-amber-50 text-amber-700 border-amber-200"
-                              }`}>
-                                <span className="w-1 h-1 rounded-full bg-current" />
-                                <span className="capitalize">{inquiry.status}</span>
-                              </span>
-                            </div>
+                      {inquiries.slice(0, 6).map((inquiry) => {
+                        const isPendingNew = inquiry.status === "pending";
+                        return (
+                          <div 
+                            key={inquiry.id} 
+                            className={`p-4 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                              isPendingNew 
+                                ? "bg-amber-50/70 hover:bg-amber-100/60 border-l-4 border-l-amber-500" 
+                                : "hover:bg-slate-50/70"
+                            }`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-800">
+                                  {inquiry.inquiry_code}
+                                </span>
+                                <span className="text-xs font-bold text-slate-900">{inquiry.full_name}</span>
+                                
+                                {isPendingNew && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white animate-pulse shadow-xs">
+                                    <BellRing className="w-2.5 h-2.5" />
+                                    नया ऑर्डर (NEW)
+                                  </span>
+                                )}
+
+                                {/* Status Chip */}
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-semibold border ${
+                                  inquiry.status === "completed"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                    : inquiry.status === "contacted"
+                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                    : inquiry.status === "assigned"
+                                    ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                                    : inquiry.status === "cancelled"
+                                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                                    : "bg-amber-100 text-amber-800 border-amber-300 font-bold"
+                                }`}>
+                                  <span className="w-1 h-1 rounded-full bg-current" />
+                                  <span className="capitalize">{inquiry.status}</span>
+                                </span>
+                              </div>
 
                             <div className="flex items-center gap-2 text-xs text-slate-600">
                               <span className="font-medium text-slate-800">{inquiry.pickup_location}</span>
@@ -1421,7 +1471,8 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                             </Link>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                     </div>
                   </div>
 
@@ -1524,30 +1575,42 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto w-full md:w-auto">
                   {[
                     { id: "all", label: "All", count: inquiries.length },
-                    { id: "pending", label: "Pending", count: stats.pending },
+                    { id: "pending", label: "नए ऑर्डर्स (New)", count: stats.pending },
                     { id: "contacted", label: "Contacted", count: stats.contacted },
                     { id: "assigned", label: "Assigned", count: stats.assigned },
                     { id: "completed", label: "Completed", count: stats.completed },
                     { id: "cancelled", label: "Cancelled", count: inquiries.filter((i) => i.status === "cancelled").length },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setOrderFilter(tab.id)}
-                      className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                        orderFilter === tab.id
-                          ? "bg-white text-slate-900 shadow-xs font-semibold"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      <span>{tab.label}</span>
-                      <span className={`text-[10px] font-mono px-1 py-0.2 rounded-full ${
-                        orderFilter === tab.id ? "bg-slate-100 text-slate-800" : "text-slate-400"
-                      }`}>
-                        {tab.count}
-                      </span>
-                    </button>
-                  ))}
+                  ].map((tab) => {
+                    const isTabPending = tab.id === "pending" && tab.count > 0;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setOrderFilter(tab.id)}
+                        className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                          orderFilter === tab.id
+                            ? isTabPending
+                              ? "bg-amber-500 text-white shadow-xs font-bold"
+                              : "bg-white text-slate-900 shadow-xs font-semibold"
+                            : isTabPending
+                            ? "bg-amber-100 text-amber-800 font-bold border border-amber-300 animate-pulse"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        {isTabPending && <BellRing className="w-3 h-3 text-current" />}
+                        <span>{tab.label}</span>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                          orderFilter === tab.id 
+                            ? "bg-black/15 text-current" 
+                            : isTabPending
+                            ? "bg-amber-200 text-amber-900 font-bold"
+                            : "bg-slate-200/60 text-slate-500"
+                        }`}>
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
 
               </div>
@@ -1564,17 +1627,32 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                     cancellation_reason: inquiry.cancellation_reason || "",
                   };
 
+                  const isNewOrder = state.status === "pending";
                   const isSaved = savedSuccessId === inquiry.id;
                   const isUpdating = updatingId === inquiry.id;
 
                   return (
                     <div
                       key={inquiry.id}
-                      className="bg-white border border-slate-200/80 hover:border-slate-300 rounded-xl shadow-xs transition-colors overflow-hidden"
+                      className={
+                        isNewOrder
+                          ? "bg-amber-50/25 border-2 border-amber-400 ring-2 ring-amber-300/30 rounded-xl shadow-md transition-all overflow-hidden"
+                          : "bg-white border border-slate-200/80 hover:border-slate-300 rounded-xl shadow-xs transition-colors overflow-hidden"
+                      }
                     >
                       {/* Card Header Strip */}
-                      <div className="px-4 py-3 bg-slate-50/60 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className={
+                        isNewOrder
+                          ? "px-4 py-3 bg-amber-100/75 border-b border-amber-200 flex flex-wrap items-center justify-between gap-2 text-xs"
+                          : "px-4 py-3 bg-slate-50/60 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs"
+                      }>
                         <div className="flex items-center gap-2">
+                          {isNewOrder && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-white shadow-xs animate-pulse">
+                              <BellRing className="w-3 h-3" />
+                              🔔 नया बुकिंग ऑर्डर (NEW)
+                            </span>
+                          )}
                           <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-xs">
                             {inquiry.inquiry_code}
                           </span>
@@ -1684,7 +1762,18 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                         </div>
 
                         {/* Column 2: Driver & Assignment */}
-                        <div className="lg:col-span-4 space-y-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/60">
+                        <div className={`lg:col-span-4 space-y-3 p-3.5 rounded-xl border ${
+                          isNewOrder 
+                            ? "bg-amber-50/80 border-amber-200" 
+                            : "bg-slate-50/70 border-slate-200/60"
+                        }`}>
+                          {isNewOrder && (
+                            <div className="p-2 rounded-lg bg-amber-100/90 border border-amber-300 text-amber-900 text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
+                              <BellRing className="w-3.5 h-3.5 text-amber-600 shrink-0 animate-bounce" />
+                              <span>नया ऑर्डर - ग्राहक से बात करके तय किराया व ड्राइवर डालें</span>
+                            </div>
+                          )}
+
                           <div className="flex items-center justify-between">
                             <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider font-mono">
                               Driver & Fare Control
