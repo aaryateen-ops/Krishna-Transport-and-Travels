@@ -13,6 +13,9 @@ import {
   toggleReviewApproval,
   deleteReview,
   submitCustomerReview,
+  getPricingSettings,
+  updatePricingSettings,
+  PricingRecord,
   OperationalUpdateData 
 } from "@/app/actions";
 import { 
@@ -66,7 +69,8 @@ import {
   MessageSquare,
   Image as ImageIcon,
   Edit3,
-  Globe
+  Globe,
+  Copy
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons";
 
@@ -222,14 +226,22 @@ export default function AdminDashboard() {
   const [revComment, setRevComment] = useState("");
   const [savingReview, setSavingReview] = useState(false);
 
-  // Rate calculator in-tab state (Dynamic & Editable)
+  // Rate calculator in-tab state (Dynamic & Editable by Rohit Singh)
   const [calcMode, setCalcMode] = useState<"hub" | "custom">("hub");
   const [calcPickup, setCalcPickup] = useState("salarpur");
   const [calcDrop, setCalcDrop] = useState("lanka");
   const [calcCustomKm, setCalcCustomKm] = useState(15);
   const [calcVehicle, setCalcVehicle] = useState("tata-ace");
+  const [customBaseRate, setCustomBaseRate] = useState<number>(750);
+  const [customPerKm, setCustomPerKm] = useState<number>(26);
   const [calcHelpers, setCalcHelpers] = useState(1);
+  const [customHelperCharge, setCustomHelperCharge] = useState(350);
+  const [calcExtraCharges, setCalcExtraCharges] = useState(0);
+  const [calcExtraReason, setCalcExtraReason] = useState("");
   const [calcIsRoundTrip, setCalcIsRoundTrip] = useState(false);
+  const [calcPhone, setCalcPhone] = useState("");
+  const [rateSavedMessage, setRateSavedMessage] = useState("");
+  const [copiedQuote, setCopiedQuote] = useState(false);
 
   // Load sound, drivers & vehicle rates from localStorage
   useEffect(() => {
@@ -307,6 +319,27 @@ export default function AdminDashboard() {
         const revResult = await getAdminReviews(accessToken);
         if (revResult.success && revResult.reviews) {
           setReviews(revResult.reviews);
+        }
+
+        // Fetch vehicle pricing settings from Supabase
+        const priceResult = await getPricingSettings();
+        if (priceResult.success && priceResult.pricing && priceResult.pricing.length > 0) {
+          const mapped: VehicleRateConfig[] = priceResult.pricing.map((p) => ({
+            id: p.id,
+            name: p.vehicle_name,
+            baseRate: Number(p.base_fare),
+            perKm: Number(p.per_km_rate),
+          }));
+          setVehicleRates(mapped);
+          if (priceResult.pricing[0]?.helper_rate) {
+            setRateHelperCharge(Number(priceResult.pricing[0].helper_rate));
+            setCustomHelperCharge(Number(priceResult.pricing[0].helper_rate));
+          }
+          const defaultV = mapped.find((v) => v.id === "tata-ace") || mapped[0];
+          if (defaultV) {
+            setCustomBaseRate(defaultV.baseRate);
+            setCustomPerKm(defaultV.perKm);
+          }
         }
       } catch (err) {
         console.error("Admin verification exception:", err);
@@ -408,6 +441,16 @@ export default function AdminDashboard() {
     const revResult = await getAdminReviews(token);
     if (revResult.success && revResult.reviews) {
       setReviews(revResult.reviews);
+    }
+    const priceRes = await getPricingSettings();
+    if (priceRes.success && priceRes.pricing && priceRes.pricing.length > 0) {
+      const mapped: VehicleRateConfig[] = priceRes.pricing.map((p) => ({
+        id: p.id,
+        name: p.vehicle_name,
+        baseRate: Number(p.base_fare),
+        perKm: Number(p.per_km_rate),
+      }));
+      setVehicleRates(mapped);
     }
     setRefreshLoading(false);
   };
@@ -571,11 +614,74 @@ export default function AdminDashboard() {
     setCreatingBooking(false);
   };
 
-  // Save Pricing Changes (CMS)
-  const handleSaveVehicleRates = (updatedRates: VehicleRateConfig[]) => {
+  // Dynamic vehicle selection for calculator
+  const handleSelectVehicleForCalc = (vehId: string) => {
+    setCalcVehicle(vehId);
+    const found = vehicleRates.find((v) => v.id === vehId);
+    if (found) {
+      setCustomBaseRate(found.baseRate);
+      setCustomPerKm(found.perKm);
+    }
+  };
+
+  // Save current calculator rates as permanent default for the selected vehicle
+  const handleSaveCurrentAsDefault = async () => {
+    if (!customBaseRate || !customPerKm) return;
+    const currentVeh = vehicleRates.find((v) => v.id === calcVehicle);
+    if (!currentVeh) return;
+
+    const updatedRates = vehicleRates.map((v) =>
+      v.id === calcVehicle
+        ? { ...v, baseRate: Number(customBaseRate), perKm: Number(customPerKm) }
+        : v
+    );
     setVehicleRates(updatedRates);
     localStorage.setItem("krishna_admin_vehicle_rates", JSON.stringify(updatedRates));
-    alert("Pricing rates saved successfully!");
+
+    const payload: PricingRecord[] = updatedRates.map((v) => ({
+      id: v.id,
+      vehicle_name: v.name,
+      base_fare: v.baseRate,
+      per_km_rate: v.perKm,
+      helper_rate: customHelperCharge || rateHelperCharge,
+    }));
+
+    const res = await updatePricingSettings(payload, token);
+    if (res.success) {
+      setRateSavedMessage(`✓ ${currentVeh.name} की डिफॉल्ट दर सेव हो गई (बेस: ₹${customBaseRate}, ₹${customPerKm}/KM)`);
+    } else {
+      setRateSavedMessage(`✓ लोकल सेव हो गया`);
+    }
+    setTimeout(() => setRateSavedMessage(""), 4500);
+  };
+
+  // Save Pricing Changes (CMS Tab)
+  const handleSaveVehicleRates = async (updatedRates: VehicleRateConfig[]) => {
+    setVehicleRates(updatedRates);
+    localStorage.setItem("krishna_admin_vehicle_rates", JSON.stringify(updatedRates));
+    
+    const payload: PricingRecord[] = updatedRates.map((v) => ({
+      id: v.id,
+      vehicle_name: v.name,
+      base_fare: v.baseRate,
+      per_km_rate: v.perKm,
+      helper_rate: rateHelperCharge,
+    }));
+
+    const res = await updatePricingSettings(payload, token);
+    if (res.success) {
+      alert("वाहनों की नई दरें वेबसाइट और सिस्टम में लाइव सेव हो गई हैं!");
+    } else {
+      alert("दरें लोकल सेव हो गईं। (डेटाबेस सूचना: " + (res.error || "ok") + ")");
+    }
+  };
+
+  const handleCopyQuote = (text: string) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+      setCopiedQuote(true);
+      setTimeout(() => setCopiedQuote(false), 2500);
+    }
   };
 
   // Review CMS actions
@@ -700,7 +806,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
     return { total, pending, contacted, assigned, completed, totalQuoted };
   }, [inquiries]);
 
-  // Dynamic Rate Calculator computation (uses custom or hub distance + dynamic vehicleRates)
+  // Dynamic Rate Calculator computation (uses custom on-the-spot rates + custom/hub distance + surcharges)
   const calcResult = useMemo(() => {
     const vehObj = vehicleRates.find((v) => v.id === calcVehicle) || vehicleRates[1] || DEFAULT_VEHICLES[1];
 
@@ -710,8 +816,8 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
 
     if (calcMode === "custom") {
       distance = Math.max(1, calcCustomKm || 10);
-      pickupName = "Custom Pickup Location";
-      dropName = "Custom Drop Destination";
+      pickupName = "कस्टम पिकअप स्थान";
+      dropName = "कस्टम ड्रॉप स्थान";
     } else {
       const pickupObj = LOCATIONS_FOR_CALC.find((l) => l.id === calcPickup) || LOCATIONS_FOR_CALC[0];
       const dropObj = LOCATIONS_FOR_CALC.find((l) => l.id === calcDrop) || LOCATIONS_FOR_CALC[1];
@@ -723,22 +829,42 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
 
     if (calcIsRoundTrip) distance = distance * 2;
 
-    const baseCost = vehObj.baseRate;
-    const distanceCost = distance * vehObj.perKm;
-    const helperCost = calcHelpers * rateHelperCharge;
-    const totalEstimated = baseCost + distanceCost + helperCost;
+    const baseCost = Number(customBaseRate) || vehObj.baseRate;
+    const perKm = Number(customPerKm) || vehObj.perKm;
+    const distanceCost = Math.round(distance * perKm);
+    const helperUnit = Number(customHelperCharge) || rateHelperCharge;
+    const helperCost = calcHelpers * helperUnit;
+    const extraCost = Number(calcExtraCharges) || 0;
+    const totalEstimated = baseCost + distanceCost + helperCost + extraCost;
 
     return {
       distance,
+      perKm,
       baseCost,
       distanceCost,
+      helperUnit,
       helperCost,
+      extraCost,
       totalEstimated,
       vehicleName: vehObj.name,
       pickupName,
       dropName,
     };
-  }, [calcMode, calcPickup, calcDrop, calcCustomKm, calcVehicle, calcHelpers, calcIsRoundTrip, vehicleRates, rateHelperCharge]);
+  }, [
+    calcMode,
+    calcPickup,
+    calcDrop,
+    calcCustomKm,
+    calcVehicle,
+    customBaseRate,
+    customPerKm,
+    calcHelpers,
+    customHelperCharge,
+    calcExtraCharges,
+    calcIsRoundTrip,
+    vehicleRates,
+    rateHelperCharge,
+  ]);
 
   if (checkingSession) {
     return (
@@ -1976,15 +2102,17 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                {/* Dynamic Rate Estimator */}
-                <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
-                  <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                {/* Dynamic Rate Estimator & Custom Pricing Controls */}
+                <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-5">
+                  <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <h2 className="text-sm font-bold text-slate-900">Dynamic Fare Estimator</h2>
-                      <p className="text-xs text-slate-500">Calculate custom freight based on distance, vehicle, & helpers.</p>
+                      <h2 className="text-sm font-bold text-slate-900">किराया कैलकुलेटर (Fare Calculator)</h2>
+                      <p className="text-xs text-slate-500">
+                        गाड़ी चुनें, अपने हिसाब से बेस व प्रति KM दर बदलें और तुरंत कोटेशन निकालें।
+                      </p>
                     </div>
                     {/* Calculation Mode Toggle */}
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 self-start sm:self-auto">
                       <button
                         type="button"
                         onClick={() => setCalcMode("hub")}
@@ -1992,7 +2120,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                           calcMode === "hub" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600"
                         }`}
                       >
-                        Varanasi Hubs
+                        वाराणसी हब
                       </button>
                       <button
                         type="button"
@@ -2001,117 +2129,169 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                           calcMode === "custom" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600"
                         }`}
                       >
-                        Custom KM
+                        कस्टम KM
                       </button>
                     </div>
                   </div>
 
-                  {calcMode === "hub" ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
-                          Pickup Hub (Varanasi)
-                        </label>
-                        <select
-                          value={calcPickup}
-                          onChange={(e) => setCalcPickup(e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
-                        >
-                          {LOCATIONS_FOR_CALC.map((l) => (
-                            <option key={l.id} value={l.id}>{l.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
-                          Drop Hub
-                        </label>
-                        <select
-                          value={calcDrop}
-                          onChange={(e) => setCalcDrop(e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
-                        >
-                          {LOCATIONS_FOR_CALC.map((l) => (
-                            <option key={l.id} value={l.id}>{l.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
-                        Trip Distance in Kilometers (KM)
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="range"
-                          min="1"
-                          max="200"
-                          value={calcCustomKm}
-                          onChange={(e) => setCalcCustomKm(Number(e.target.value))}
-                          className="flex-1"
-                        />
-                        <div className="w-20 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold text-center">
-                          {calcCustomKm} KM
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
+                  {/* 1. Vehicle Selection */}
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">
-                      Choose Vehicle Type
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1.5">
+                      1. वाहन चुनें (Select Vehicle)
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {vehicleRates.map((veh) => (
                         <button
                           key={veh.id}
                           type="button"
-                          onClick={() => setCalcVehicle(veh.id)}
+                          onClick={() => handleSelectVehicleForCalc(veh.id)}
                           className={`p-2.5 rounded-lg border text-left transition-all ${
                             calcVehicle === veh.id
-                              ? "border-blue-600 bg-blue-50/50 text-blue-900 ring-1 ring-blue-600"
+                              ? "border-blue-600 bg-blue-50/50 text-blue-900 ring-1 ring-blue-600 shadow-xs"
                               : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
                           }`}
                         >
                           <span className="block text-xs font-bold truncate">{veh.name}</span>
                           <span className="block text-[10px] text-slate-500 font-mono mt-0.5">
-                            ₹{veh.baseRate} base • ₹{veh.perKm}/km
+                            ₹{veh.baseRate} बेस • ₹{veh.perKm}/KM
                           </span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Helpers & Trip Type */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div>
-                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
-                        Helpers / Labours (₹{rateHelperCharge} each)
-                      </label>
-                      <div className="flex items-center gap-2">
-                        {[0, 1, 2, 3].map((num) => (
-                          <button
-                            key={num}
-                            type="button"
-                            onClick={() => setCalcHelpers(num)}
-                            className={`flex-1 py-1.5 rounded-lg border text-xs font-bold ${
-                              calcHelpers === num
-                                ? "bg-slate-900 text-white border-slate-900"
-                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                            }`}
-                          >
-                            {num === 0 ? "None" : `${num} Helper`}
-                          </button>
-                        ))}
+                  {/* 2. On-the-fly Rate Adjustment (Rohit Singh's Custom Pricing Input) */}
+                  <div className="p-4 rounded-xl border border-blue-100 bg-blue-50/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <IndianRupee className="w-3.5 h-3.5 text-blue-600" />
+                        2. किराया दरें बदलें (Edit Rates for this Trip)
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        अपने हिसाब से रेट टाइप करें
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                          बेस किराया (Base Fare ₹)
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs">₹</span>
+                          <input
+                            type="number"
+                            value={customBaseRate}
+                            onChange={(e) => setCustomBaseRate(Number(e.target.value) || 0)}
+                            className="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <span className="text-[10px] text-slate-400 mt-0.5 block">शुरुआती पिकअप/लोडिंग चार्ज</span>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                          प्रति किलोमीटर दर (Rate Per KM ₹)
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs">₹</span>
+                          <input
+                            type="number"
+                            value={customPerKm}
+                            onChange={(e) => setCustomPerKm(Number(e.target.value) || 0)}
+                            className="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <span className="text-[10px] text-slate-400 mt-0.5 block">दूरी का रनिंग भाड़ा प्रति KM</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-blue-100">
+                      <button
+                        type="button"
+                        onClick={handleSaveCurrentAsDefault}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 shadow-xs transition-colors self-start"
+                      >
+                        <Save className="w-3 h-3 text-blue-600" />
+                        इस वाहन में डिफॉल्ट सेव करें (Save as Vehicle Default)
+                      </button>
+
+                      {rateSavedMessage && (
+                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {rateSavedMessage}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. Distance & Route */}
+                  <div className="space-y-3">
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                      3. सफर का रूट व दूरी (Route & Distance)
+                    </label>
+
+                    {calcMode === "hub" ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 block mb-1">
+                            पिकअप हब (Varanasi Pickup)
+                          </label>
+                          <select
+                            value={calcPickup}
+                            onChange={(e) => setCalcPickup(e.target.value)}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
+                          >
+                            {LOCATIONS_FOR_CALC.map((l) => (
+                              <option key={l.id} value={l.id}>{l.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 block mb-1">
+                            ड्रॉप हब (Drop Location)
+                          </label>
+                          <select
+                            value={calcDrop}
+                            onChange={(e) => setCalcDrop(e.target.value)}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
+                          >
+                            {LOCATIONS_FOR_CALC.map((l) => (
+                              <option key={l.id} value={l.id}>{l.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="range"
+                            min="1"
+                            max="250"
+                            value={calcCustomKm}
+                            onChange={(e) => setCalcCustomKm(Number(e.target.value))}
+                            className="flex-1 accent-blue-600"
+                          />
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              min="1"
+                              max="1000"
+                              value={calcCustomKm}
+                              onChange={(e) => setCalcCustomKm(Number(e.target.value) || 1)}
+                              className="w-20 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold text-center"
+                            />
+                            <span className="text-xs font-mono font-semibold text-slate-500">KM</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-slate-50">
                       <div>
-                        <span className="text-xs font-bold text-slate-900 block">Round Trip (दोतरफा)</span>
-                        <span className="text-[10px] text-slate-500 block">Return trip with cargo</span>
+                        <span className="text-xs font-bold text-slate-900 block">दोतरफा फेरा (Round Trip)</span>
+                        <span className="text-[10px] text-slate-500 block">दूरी दोगुनी हो जाएगी ({calcResult.distance} KM)</span>
                       </div>
                       <input
                         type="checkbox"
@@ -2122,49 +2302,176 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                     </div>
                   </div>
 
-                </div>
-
-                {/* Calculation Receipt Card */}
-                <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900 uppercase font-mono tracking-wider">
-                        Fare Summary Slip
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                        Live Estimate
-                      </span>
+                  {/* 4. Helpers & Labour Cost */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        4. लेबर / हेल्पर की संख्या
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        {[0, 1, 2, 3, 4].map((num) => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => setCalcHelpers(num)}
+                            className={`flex-1 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
+                              calcHelpers === num
+                                ? "bg-slate-900 text-white border-slate-900"
+                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            {num === 0 ? "0" : `${num}`}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="py-4 space-y-2.5 text-xs">
-                      <div className="flex justify-between text-slate-600">
-                        <span>Trip Route:</span>
-                        <span className="font-semibold text-slate-900 text-right">{calcResult.pickupName} → {calcResult.dropName}</span>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        प्रति हेल्पर चार्ज (₹ Helper Rate)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs">₹</span>
+                        <input
+                          type="number"
+                          value={customHelperCharge}
+                          onChange={(e) => setCustomHelperCharge(Number(e.target.value) || 0)}
+                          className="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                        />
                       </div>
-                      <div className="flex justify-between text-slate-600">
-                        <span>Distance:</span>
-                        <span className="font-mono font-semibold text-slate-900">{calcResult.distance} KM</span>
-                      </div>
-                      <div className="flex justify-between text-slate-600">
-                        <span>Base Fare ({calcResult.vehicleName.split("(")[0]}):</span>
-                        <span className="font-mono text-slate-800">₹{calcResult.baseCost}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-600">
-                        <span>Distance Freight ({calcResult.distance} KM):</span>
-                        <span className="font-mono text-slate-800">₹{calcResult.distanceCost}</span>
-                      </div>
-                      {calcResult.helperCost > 0 && (
-                        <div className="flex justify-between text-slate-600">
-                          <span>Helper Lifting Charge ({calcHelpers}):</span>
-                          <span className="font-mono text-slate-800">₹{calcResult.helperCost}</span>
+                    </div>
+                  </div>
+
+                  {/* 5. Extra Local Charges (Mandi / Alleyways / No-Entry) */}
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-semibold text-slate-700 block">
+                        5. अतिरिक्त लोकल चार्ज (Extra Surcharges)
+                      </label>
+                      <span className="text-[10px] text-slate-400">मंडी, तंग गली, नो-एंट्री परमिट</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs">₹</span>
+                          <input
+                            type="number"
+                            value={calcExtraCharges}
+                            onChange={(e) => setCalcExtraCharges(Number(e.target.value) || 0)}
+                            placeholder="0"
+                            className="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                          />
                         </div>
+                      </div>
+
+                      <div>
+                        <input
+                          type="text"
+                          value={calcExtraReason}
+                          onChange={(e) => setCalcExtraReason(e.target.value)}
+                          placeholder="कारण (उदा: गोदौलिया तंग गली / मंडी पर्ची)"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Quick Preset Chips */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      {[
+                        { label: "+₹200 तंग गली (चौक/गोदौलिया)", amount: 200, reason: "चौक/गोदौलिया तंग गली" },
+                        { label: "+₹300 नो-एंट्री परमिट", amount: 300, reason: "नो-एंट्री परमिट" },
+                        { label: "+₹150 मंडी प्रवेश पर्ची", amount: 150, reason: "मंडी गेट पर्ची" },
+                        { label: "+₹250 वेटिंग चार्ज (>2 घंटा)", amount: 250, reason: "2 घंटे से अधिक वेटिंग" },
+                      ].map((chip, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setCalcExtraCharges(chip.amount);
+                            setCalcExtraReason(chip.reason);
+                          }}
+                          className="px-2 py-0.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 border border-slate-200 rounded text-[10px] font-medium text-slate-600 transition-colors"
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                      {calcExtraCharges > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCalcExtraCharges(0);
+                            setCalcExtraReason("");
+                          }}
+                          className="px-2 py-0.5 text-[10px] font-bold text-rose-600 hover:underline"
+                        >
+                          हटाएं (Clear)
+                        </button>
                       )}
                     </div>
+                  </div>
 
-                    <div className="pt-3 border-t border-slate-200/80 flex items-baseline justify-between">
+                </div>
+
+                {/* Calculation Receipt Card & Direct WhatsApp Quote Generator */}
+                <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex flex-col justify-between space-y-5">
+                  <div className="space-y-4">
+                    <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900 uppercase font-mono tracking-wider flex items-center gap-1.5">
+                        <ClipboardList className="w-3.5 h-3.5 text-blue-600" />
+                        किराया पर्ची (Fare Summary)
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        Live Quote
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5 text-xs">
+                      <div className="flex justify-between text-slate-600">
+                        <span>रूट:</span>
+                        <span className="font-semibold text-slate-900 text-right">
+                          {calcResult.pickupName} → {calcResult.dropName}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-600">
+                        <span>दूरी:</span>
+                        <span className="font-mono font-semibold text-slate-900">
+                          {calcResult.distance} KM {calcIsRoundTrip ? "(दोतरफा)" : ""}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-600">
+                        <span>वाहन:</span>
+                        <span className="font-semibold text-slate-800">{calcResult.vehicleName}</span>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                        <div className="flex justify-between text-slate-600">
+                          <span>बेस किराया:</span>
+                          <span className="font-mono font-semibold text-slate-800">₹{calcResult.baseCost}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-600">
+                          <span>रनिंग भाड़ा ({calcResult.distance} KM × ₹{calcResult.perKm}/KM):</span>
+                          <span className="font-mono font-semibold text-slate-800">₹{calcResult.distanceCost}</span>
+                        </div>
+                        {calcResult.helperCost > 0 && (
+                          <div className="flex justify-between text-slate-600">
+                            <span>हेल्पर / लेबर ({calcHelpers} व्यक्ति × ₹{calcResult.helperUnit}):</span>
+                            <span className="font-mono font-semibold text-slate-800">₹{calcResult.helperCost}</span>
+                          </div>
+                        )}
+                        {calcResult.extraCost > 0 && (
+                          <div className="flex justify-between text-amber-700 bg-amber-50/60 px-2 py-1 rounded">
+                            <span>अतिरिक्त चार्ज {calcExtraReason ? `(${calcExtraReason})` : ""}:</span>
+                            <span className="font-mono font-bold">₹{calcResult.extraCost}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-200/80 flex items-baseline justify-between bg-slate-50/80 p-3 rounded-lg">
                       <div>
-                        <span className="text-xs font-bold text-slate-900 block">Total Quoted Amount</span>
-                        <span className="text-[10px] text-slate-400">Tolls & parking actuals extra</span>
+                        <span className="text-xs font-bold text-slate-900 block">कुल तय किराया (Total)</span>
+                        <span className="text-[10px] text-slate-400">टोल व पार्किंग रसीद अनुसार अलग</span>
                       </div>
                       <span className="text-2xl font-bold font-mono text-blue-600">
                         ₹{calcResult.totalEstimated}
@@ -2172,17 +2479,58 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                     </div>
                   </div>
 
-                  <a
-                    href={`https://wa.me/?text=${encodeURIComponent(
-                      `🚚 *कृष्णा ट्रांसपोर्ट - किराया कोटेशन*\nरूट: ${calcResult.pickupName} से ${calcResult.dropName} (${calcResult.distance} KM)\nगाड़ी: ${calcResult.vehicleName}\nहेल्पर: ${calcHelpers}\n\n*अनुमानित किराया: ₹${calcResult.totalEstimated}*\n\nरोहित सिंह (+91 70803 60217)`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <WhatsAppIcon className="w-4 h-4 fill-current" />
-                    <span>Send Quote via WhatsApp</span>
-                  </a>
+                  {/* Actions & WhatsApp Sharing */}
+                  <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                    <div>
+                      <label className="text-[10px] font-semibold text-slate-500 block mb-1">
+                        ग्राहक का WhatsApp नंबर (वैकल्पिक)
+                      </label>
+                      <input
+                        type="tel"
+                        value={calcPhone}
+                        onChange={(e) => setCalcPhone(e.target.value.replace(/\D/g, ""))}
+                        placeholder="10 अंकों का मोबाइल नंबर (उदा: 9838000000)"
+                        maxLength={10}
+                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    {(() => {
+                      const quoteMessage = `🚚 *कृष्णा ट्रांसपोर्ट - किराया कोटेशन*\nरूट: ${calcResult.pickupName} से ${calcResult.dropName} (${calcResult.distance} KM${calcIsRoundTrip ? " दोतरफा" : ""})\nगाड़ी: ${calcResult.vehicleName}\n\n• बेस किराया: ₹${calcResult.baseCost}\n• रनिंग भाड़ा (${calcResult.distance} KM × ₹${calcResult.perKm}/KM): ₹${calcResult.distanceCost}\n${calcResult.helperCost > 0 ? `• हेल्पर/लेबर चार्ज (${calcHelpers} व्यक्ति): ₹${calcResult.helperCost}\n` : ""}${calcResult.extraCost > 0 ? `• अतिरिक्त चार्ज${calcExtraReason ? ` (${calcExtraReason})` : ""}: ₹${calcResult.extraCost}\n` : ""}\n💰 *कुल तय किराया: ₹${calcResult.totalEstimated}*\n(टोल टैक्स व पार्किंग वास्तविक रसीद अनुसार अलग)\n\nरोहित सिंह (कृष्णा ट्रांसपोर्ट, सलारपुर वाराणसी)\n📞 +91 70803 60217`;
+                      
+                      const cleanPhone = calcPhone.trim().replace(/\D/g, "");
+                      const targetUrl = cleanPhone.length === 10
+                        ? `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(quoteMessage)}`
+                        : `https://wa.me/?text=${encodeURIComponent(quoteMessage)}`;
+
+                      return (
+                        <div className="space-y-2">
+                          <a
+                            href={targetUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center gap-2 transition-colors"
+                          >
+                            <WhatsAppIcon className="w-4 h-4 fill-current" />
+                            <span>
+                              {cleanPhone.length === 10
+                                ? `Send Quote to +91 ${cleanPhone}`
+                                : "Send Quote via WhatsApp"}
+                            </span>
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => handleCopyQuote(quoteMessage)}
+                            className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>{copiedQuote ? "✓ कोटेशन कॉपी हो गया!" : "कोटेशन कॉपी करें (Copy Quote)"}</span>
+                          </button>
+                        </div>
+                      );
+                    })()}
+                  </div>
 
                 </div>
 

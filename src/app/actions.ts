@@ -419,4 +419,62 @@ export async function deleteReview(reviewId: string, token: string) {
   }
 }
 
+// 11. Vehicle Pricing Settings (Dynamic Rates Master)
+export interface PricingRecord {
+  id: string;
+  vehicle_name: string;
+  base_fare: number;
+  per_km_rate: number;
+  helper_rate: number;
+}
+
+export async function getPricingSettings() {
+  try {
+    const { data, error } = await supabase
+      .from("pricing_settings")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) {
+      console.error("Get pricing settings error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, pricing: (data || []) as PricingRecord[] };
+  } catch (err) {
+    console.error("Get pricing settings exception:", err);
+    return { success: false, error: "Failed to fetch pricing settings." };
+  }
+}
+
+export async function updatePricingSettings(records: PricingRecord[], token: string) {
+  try {
+    if (!token) return { success: false, error: "Session token is required." };
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
+    for (const rec of records) {
+      await supabaseAdmin
+        .from("pricing_settings")
+        .upsert({
+          id: rec.id,
+          vehicle_name: rec.vehicle_name,
+          base_fare: Number(rec.base_fare),
+          per_km_rate: Number(rec.per_km_rate),
+          helper_rate: Number(rec.helper_rate),
+          updated_at: new Date().toISOString(),
+        });
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("Update pricing settings exception:", err);
+    return { success: false, error: "Failed to update pricing settings." };
+  }
+}
+
+
 
