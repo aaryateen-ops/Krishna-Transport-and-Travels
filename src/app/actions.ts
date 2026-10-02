@@ -302,3 +302,121 @@ export async function cancelBooking(code: string, reason: string) {
   }
 }
 
+// 7. Customer Feedback & Review Submissions
+export interface CustomerReviewInput {
+  inquiryCode?: string;
+  customerName: string;
+  customerPhone?: string;
+  rating: number;
+  comment: string;
+}
+
+export async function submitCustomerReview(input: CustomerReviewInput) {
+  try {
+    if (!input.customerName || !input.comment) {
+      return { success: false, error: "Customer name and comment are required." };
+    }
+
+    const { error } = await supabase
+      .from("reviews")
+      .insert([
+        {
+          inquiry_code: input.inquiryCode ? input.inquiryCode.trim() : null,
+          customer_name: input.customerName.trim(),
+          customer_phone: input.customerPhone ? input.customerPhone.trim() : null,
+          rating: Math.min(5, Math.max(1, input.rating || 5)),
+          comment: input.comment.trim(),
+          is_approved: true, // Visible immediately
+        }
+      ]);
+
+    if (error) {
+      console.error("Submit review error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("Submit review exception:", err);
+    return { success: false, error: "Failed to submit review." };
+  }
+}
+
+// 8. Admin Reviews Fetch & Management
+export async function getAdminReviews(token: string) {
+  try {
+    if (!token) return { success: false, error: "Session token is required." };
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("reviews")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Get admin reviews error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, reviews: data || [] };
+  } catch (err) {
+    console.error("Get admin reviews exception:", err);
+    return { success: false, error: "Failed to fetch reviews." };
+  }
+}
+
+// 9. Admin Toggle Review Approval
+export async function toggleReviewApproval(reviewId: string, isApproved: boolean, token: string) {
+  try {
+    if (!token) return { success: false, error: "Session token is required." };
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("reviews")
+      .update({ is_approved: isApproved })
+      .eq("id", reviewId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to update review status." };
+  }
+}
+
+// 10. Admin Delete Review
+export async function deleteReview(reviewId: string, token: string) {
+  try {
+    if (!token) return { success: false, error: "Session token is required." };
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.email !== "rohitsingh0641346@gmail.com") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("reviews")
+      .delete()
+      .eq("id", reviewId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to delete review." };
+  }
+}
+
+

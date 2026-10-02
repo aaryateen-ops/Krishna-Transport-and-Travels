@@ -9,6 +9,10 @@ import {
   updateInquiryOperations, 
   deleteInquiry, 
   submitInquiry,
+  getAdminReviews,
+  toggleReviewApproval,
+  deleteReview,
+  submitCustomerReview,
   OperationalUpdateData 
 } from "@/app/actions";
 import { 
@@ -52,17 +56,22 @@ import {
   ArrowRight,
   Sparkles,
   Sliders,
-  DollarSign,
   PhoneCall,
   Activity,
   Layers,
   ChevronRight,
-  Filter
+  Filter,
+  IndianRupee,
+  Star,
+  MessageSquare,
+  Image as ImageIcon,
+  Edit3,
+  Globe
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons";
 
 // Type definitions
-type AdminTab = "dashboard" | "orders" | "drivers" | "rates" | "settings";
+type AdminTab = "dashboard" | "orders" | "drivers" | "rates" | "cms" | "settings";
 
 interface DriverItem {
   id: string;
@@ -73,11 +82,25 @@ interface DriverItem {
   status: "available" | "on_duty";
 }
 
+interface VehicleRateConfig {
+  id: string;
+  name: string;
+  baseRate: number;
+  perKm: number;
+}
+
 const DEFAULT_DRIVERS: DriverItem[] = [
   { id: "d1", name: "सोनू यादव", phone: "9838123456", vehicleType: "टाटा एस (छोटा हाथी)", vehicleNumber: "UP 65 BT 4512", status: "available" },
   { id: "d2", name: "विनोद कुमार", phone: "9450654321", vehicleType: "महिन्द्रा अल्फा (3W)", vehicleNumber: "UP 65 AT 8921", status: "available" },
   { id: "d3", name: "पप्पू सिंह", phone: "9919786543", vehicleType: "पियाजियो आपे टेम्पो", vehicleNumber: "UP 65 CT 3314", status: "on_duty" },
   { id: "d4", name: "राजेश मौर्या", phone: "9795129876", vehicleType: "महिन्द्रा बोलेरो पिकअप", vehicleNumber: "UP 65 ET 7720", status: "available" },
+];
+
+const DEFAULT_VEHICLES: VehicleRateConfig[] = [
+  { id: "alfa", name: "महिंद्रा अल्फा (500 KG)", baseRate: 600, perKm: 20 },
+  { id: "tata-ace", name: "टाटा एस छोटा हाथी (1.2 टन)", baseRate: 750, perKm: 26 },
+  { id: "tempo", name: "पियाजियो आपे (750 KG)", baseRate: 650, perKm: 22 },
+  { id: "pickup", name: "बोलेरो पिकअप (1.7 टन)", baseRate: 1000, perKm: 30 },
 ];
 
 const LOCATIONS_FOR_CALC = [
@@ -99,14 +122,7 @@ const LOCATIONS_FOR_CALC = [
   { id: "mau", name: "मऊ", km: 98 },
 ];
 
-const VEHICLES_FOR_CALC = [
-  { id: "alfa", name: "महिंद्रा अल्फा (500 KG)", baseRate: 600, perKm: 20 },
-  { id: "tata-ace", name: "टाटा एस छोटा हाथी (1.2 टन)", baseRate: 750, perKm: 26 },
-  { id: "tempo", name: "पियाजियो आपे (750 KG)", baseRate: 650, perKm: 22 },
-  { id: "pickup", name: "बोलेरो पिकअप (1.7 टन)", baseRate: 1000, perKm: 30 },
-];
-
-// High-fidelity Web Audio API Synthesizer (Zero asset dependency)
+// Web Audio API Synthesizer (Zero asset dependency)
 const playBookingSound = () => {
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -132,10 +148,6 @@ const playBookingSound = () => {
     playChimeTone(1046, 0.14, 0.22);
     playChimeTone(1318, 0.28, 0.28);
     playChimeTone(1568, 0.42, 0.45);
-    playChimeTone(784, 0.7, 0.22);
-    playChimeTone(1046, 0.84, 0.22);
-    playChimeTone(1318, 0.98, 0.28);
-    playChimeTone(1568, 1.12, 0.55);
   } catch (err) {
     console.error("Audio error:", err);
   }
@@ -152,10 +164,11 @@ export default function AdminDashboard() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [inquiries, setInquiries] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [refreshLoading, setRefreshLoading] = useState(false);
 
-  // Sound & alert states
+  // Sound alert state (Controlled exclusively via Settings tab)
   const [isSoundMuted, setIsSoundMuted] = useState(false);
   const [newOrderAlert, setNewOrderAlert] = useState<any | null>(null);
 
@@ -185,7 +198,11 @@ export default function AdminDashboard() {
   const [newDriverVehicle, setNewDriverVehicle] = useState("टाटा एस (छोटा हाथी)");
   const [newDriverPlate, setNewDriverPlate] = useState("");
 
-  // Quick New Manual Booking Modal State
+  // Dynamic Pricing Rates State (Configurable by Rohit Singh)
+  const [vehicleRates, setVehicleRates] = useState<VehicleRateConfig[]>(DEFAULT_VEHICLES);
+  const [rateHelperCharge, setRateHelperCharge] = useState(350);
+
+  // Quick New Direct Booking Modal State
   const [showNewBookingModal, setShowNewBookingModal] = useState(false);
   const [newCustName, setNewCustName] = useState("");
   const [newCustPhone, setNewCustPhone] = useState("");
@@ -193,18 +210,28 @@ export default function AdminDashboard() {
   const [newDrop, setNewDrop] = useState("");
   const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0]);
   const [newTime, setNewTime] = useState("10:00 AM");
-  const [newGoods, setNewGoods] = useState("घरेलू सामान / दुकान का माल");
+  const [newGoods, setNewGoods] = useState("दुकान / घर का सामान");
   const [newNotes, setNewNotes] = useState("");
   const [creatingBooking, setCreatingBooking] = useState(false);
 
-  // Rate calculator in-tab state
+  // Add Direct Review Modal State (Admin CMS)
+  const [showAddReviewModal, setShowAddReviewModal] = useState(false);
+  const [revCustName, setRevCustName] = useState("");
+  const [revCustPhone, setRevCustPhone] = useState("");
+  const [revRating, setRevRating] = useState(5);
+  const [revComment, setRevComment] = useState("");
+  const [savingReview, setSavingReview] = useState(false);
+
+  // Rate calculator in-tab state (Dynamic & Editable)
+  const [calcMode, setCalcMode] = useState<"hub" | "custom">("hub");
   const [calcPickup, setCalcPickup] = useState("salarpur");
   const [calcDrop, setCalcDrop] = useState("lanka");
+  const [calcCustomKm, setCalcCustomKm] = useState(15);
   const [calcVehicle, setCalcVehicle] = useState("tata-ace");
   const [calcHelpers, setCalcHelpers] = useState(1);
   const [calcIsRoundTrip, setCalcIsRoundTrip] = useState(false);
 
-  // Load sound & drivers from localStorage
+  // Load sound, drivers & vehicle rates from localStorage
   useEffect(() => {
     const mutedPref = localStorage.getItem("krishna_admin_sound_muted");
     if (mutedPref === "true") setIsSoundMuted(true);
@@ -216,6 +243,16 @@ export default function AdminDashboard() {
         if (Array.isArray(parsed) && parsed.length > 0) setDrivers(parsed);
       } catch (e) {
         console.error("Error loading drivers:", e);
+      }
+    }
+
+    const savedRates = localStorage.getItem("krishna_admin_vehicle_rates");
+    if (savedRates) {
+      try {
+        const parsedRates = JSON.parse(savedRates);
+        if (Array.isArray(parsedRates) && parsedRates.length > 0) setVehicleRates(parsedRates);
+      } catch (e) {
+        console.error("Error loading vehicle rates:", e);
       }
     }
   }, []);
@@ -257,16 +294,23 @@ export default function AdminDashboard() {
         setToken(accessToken);
         localStorage.setItem("krishna_admin_session_token", accessToken);
         
+        // Fetch inquiries
         const result = await getInquiries(accessToken);
         if (result.success && result.inquiries) {
           setInquiries(result.inquiries);
           setIsAuthorized(true);
         } else {
-          setError(result.error || "इन्क्वायरी लोड करने में समस्या आई।");
+          setError(result.error || "Failed to load inquiries.");
+        }
+
+        // Fetch customer reviews
+        const revResult = await getAdminReviews(accessToken);
+        if (revResult.success && revResult.reviews) {
+          setReviews(revResult.reviews);
         }
       } catch (err) {
         console.error("Admin verification exception:", err);
-        setError("कनेक्शन त्रुटि। कृपया दोबारा लॉगिन करें।");
+        setError("Connection error. Please refresh or re-login.");
       } finally {
         setCheckingSession(false);
       }
@@ -361,6 +405,10 @@ export default function AdminDashboard() {
     if (result.success && result.inquiries) {
       setInquiries(result.inquiries);
     }
+    const revResult = await getAdminReviews(token);
+    if (revResult.success && revResult.reviews) {
+      setReviews(revResult.reviews);
+    }
     setRefreshLoading(false);
   };
 
@@ -437,7 +485,7 @@ export default function AdminDashboard() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("क्या आप वाकई इस लीड को हटाना चाहते हैं?")) {
+    if (window.confirm("Are you sure you want to delete this booking lead?")) {
       startTransition(async () => {
         const result = await deleteInquiry(id, token);
         if (result.success) {
@@ -453,7 +501,7 @@ export default function AdminDashboard() {
   const handleAddDriver = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDriverName || !newDriverPhone) {
-      alert("कृपया नाम और फोन नंबर दर्ज करें।");
+      alert("Please enter driver name and phone number.");
       return;
     }
     const newEntry: DriverItem = {
@@ -482,7 +530,7 @@ export default function AdminDashboard() {
   };
 
   const deleteDriver = (id: string) => {
-    if (window.confirm("ड्राइवर को लिस्ट से हटाना है?")) {
+    if (window.confirm("Remove driver from fleet list?")) {
       const updated = drivers.filter((d) => d.id !== id);
       setDrivers(updated);
       localStorage.setItem("krishna_admin_drivers_list", JSON.stringify(updated));
@@ -493,7 +541,7 @@ export default function AdminDashboard() {
   const handleCreateManualBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustName || !newCustPhone || !newPickup || !newDrop) {
-      alert("कृपया आवश्यक जानकारी भरें।");
+      alert("Please fill customer name, phone, pickup, and drop destination.");
       return;
     }
 
@@ -506,7 +554,7 @@ export default function AdminDashboard() {
       bookingDate: newDate,
       bookingTime: newTime,
       goodsType: newGoods.trim(),
-      notes: newNotes.trim() || "फोन द्वारा सीधी बुकिंग (रोहित सिंह)",
+      notes: newNotes.trim() || "Phone booking taken by Rohit Singh",
     });
 
     if (result.success) {
@@ -518,9 +566,64 @@ export default function AdminDashboard() {
       setNewNotes("");
       await handleRefresh();
     } else {
-      alert(`त्रुटि: ${result.error}`);
+      alert(`Error: ${result.error}`);
     }
     setCreatingBooking(false);
+  };
+
+  // Save Pricing Changes (CMS)
+  const handleSaveVehicleRates = (updatedRates: VehicleRateConfig[]) => {
+    setVehicleRates(updatedRates);
+    localStorage.setItem("krishna_admin_vehicle_rates", JSON.stringify(updatedRates));
+    alert("Pricing rates saved successfully!");
+  };
+
+  // Review CMS actions
+  const handleToggleReviewStatus = async (reviewId: string, currentStatus: boolean) => {
+    const result = await toggleReviewApproval(reviewId, !currentStatus, token);
+    if (result.success) {
+      setReviews((prev) => 
+        prev.map((r) => r.id === reviewId ? { ...r, is_approved: !currentStatus } : r)
+      );
+    } else {
+      alert("Failed to update review status.");
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (window.confirm("Delete this customer review?")) {
+      const result = await deleteReview(reviewId, token);
+      if (result.success) {
+        setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      } else {
+        alert("Failed to delete review.");
+      }
+    }
+  };
+
+  const handleAddDirectReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!revCustName || !revComment) {
+      alert("Please provide customer name and review comment.");
+      return;
+    }
+    setSavingReview(true);
+    const res = await submitCustomerReview({
+      customerName: revCustName.trim(),
+      customerPhone: revCustPhone.trim() || undefined,
+      rating: revRating,
+      comment: revComment.trim(),
+    });
+    if (res.success) {
+      setShowAddReviewModal(false);
+      setRevCustName("");
+      setRevCustPhone("");
+      setRevComment("");
+      await handleRefresh();
+    } else {
+      alert(`Failed to add review: ${res.error}`);
+    }
+    setSavingReview(false);
   };
 
   // WhatsApp helpers
@@ -528,7 +631,7 @@ export default function AdminDashboard() {
     const cleanPhone = inquiry.phone_number.replace(/\D/g, "");
     const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
     const msg = `नमस्ते ${inquiry.full_name} जी!
-मैं कृष्णा ट्रांसपोर्ट वाराणसी से रोहित सिंह बोल रहा हूँ।
+मैं कृष्णा ट्रांसपोर्ट वाराणसी से रोहित सिंह बात कर रहा हूँ।
 
 आपकी बुकिंग (${inquiry.inquiry_code}) हमें प्राप्त हुई है:
 📍 पिकअप: ${inquiry.pickup_location}
@@ -536,7 +639,7 @@ export default function AdminDashboard() {
 📅 तारीख: ${inquiry.booking_date} (${inquiry.booking_time})
 📦 सामान: ${inquiry.goods_type}
 
-किराया फाइनल करने और गाड़ी पक्की करने के लिए कृपया संपर्क करें।`;
+किराया तय करने और गाड़ी फाइनल करने के लिए कृपया बताएं।`;
     return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
   };
 
@@ -552,7 +655,7 @@ export default function AdminDashboard() {
 📅 *तारीख व समय:* ${inquiry.booking_date} (${inquiry.booking_time})
 
 👤 *ग्राहक:* ${inquiry.full_name}
-📞 *ग्राहक फोन:* ${inquiry.phone_number}
+📞 *फोन:* ${inquiry.phone_number}
 📦 *सामान:* ${inquiry.goods_type}${inquiry.weight ? ` (वजन: ${inquiry.weight})` : ""}
 ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
 💰 *तय किराया:* ₹${quotedAmount || "तय होना बाकी"}
@@ -597,19 +700,32 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
     return { total, pending, contacted, assigned, completed, totalQuoted };
   }, [inquiries]);
 
-  // Rate calculator computation
+  // Dynamic Rate Calculator computation (uses custom or hub distance + dynamic vehicleRates)
   const calcResult = useMemo(() => {
-    const pickupObj = LOCATIONS_FOR_CALC.find((l) => l.id === calcPickup) || LOCATIONS_FOR_CALC[0];
-    const dropObj = LOCATIONS_FOR_CALC.find((l) => l.id === calcDrop) || LOCATIONS_FOR_CALC[1];
-    const vehObj = VEHICLES_FOR_CALC.find((v) => v.id === calcVehicle) || VEHICLES_FOR_CALC[1];
+    const vehObj = vehicleRates.find((v) => v.id === calcVehicle) || vehicleRates[1] || DEFAULT_VEHICLES[1];
 
-    let distance = Math.abs(pickupObj.km - dropObj.km);
-    if (distance === 0) distance = 5; // Local within same zone
+    let distance = 10;
+    let pickupName = "सलारपुर (HQ डिपो)";
+    let dropName = "लंका / बीएचयू";
+
+    if (calcMode === "custom") {
+      distance = Math.max(1, calcCustomKm || 10);
+      pickupName = "Custom Pickup Location";
+      dropName = "Custom Drop Destination";
+    } else {
+      const pickupObj = LOCATIONS_FOR_CALC.find((l) => l.id === calcPickup) || LOCATIONS_FOR_CALC[0];
+      const dropObj = LOCATIONS_FOR_CALC.find((l) => l.id === calcDrop) || LOCATIONS_FOR_CALC[1];
+      distance = Math.abs(pickupObj.km - dropObj.km);
+      if (distance === 0) distance = 5;
+      pickupName = pickupObj.name;
+      dropName = dropObj.name;
+    }
+
     if (calcIsRoundTrip) distance = distance * 2;
 
     const baseCost = vehObj.baseRate;
     const distanceCost = distance * vehObj.perKm;
-    const helperCost = calcHelpers * 350;
+    const helperCost = calcHelpers * rateHelperCharge;
     const totalEstimated = baseCost + distanceCost + helperCost;
 
     return {
@@ -619,17 +735,17 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
       helperCost,
       totalEstimated,
       vehicleName: vehObj.name,
-      pickupName: pickupObj.name,
-      dropName: dropObj.name,
+      pickupName,
+      dropName,
     };
-  }, [calcPickup, calcDrop, calcVehicle, calcHelpers, calcIsRoundTrip]);
+  }, [calcMode, calcPickup, calcDrop, calcCustomKm, calcVehicle, calcHelpers, calcIsRoundTrip, vehicleRates, rateHelperCharge]);
 
   if (checkingSession) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-400">
-        <div className="w-10 h-10 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
+        <div className="w-9 h-9 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
         <p className="mt-4 text-xs font-mono font-medium tracking-wider uppercase text-slate-400">
-          Connecting to Operations Suite...
+          Connecting to Admin Portal...
         </p>
       </div>
     );
@@ -643,26 +759,26 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
         </div>
         <h1 className="text-xl font-bold text-white tracking-tight">Access Restricted</h1>
         <p className="text-sm text-slate-400 mt-2 max-w-sm">
-          This command center is reserved exclusively for Rohit Singh (Super Administrator).
+          This portal is reserved exclusively for Rohit Singh (Business Owner).
         </p>
         <Link
           href="/login"
           className="mt-6 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
         >
-          Go to Secure Login
+          Go to Login
         </Link>
       </div>
     );
   }
 
   return (
-    // STRICT ENTERPRISE APP SHELL: Pinned 100vh viewport, Zero window jump/scroll
+    // STRICT ENTERPRISE APP SHELL: 100vh locked viewport, Zero window jump or scroll
     <div className="h-screen w-screen overflow-hidden bg-[#F8FAFC] text-slate-900 flex antialiased">
       
-      {/* 1. LEFT SIDEBAR: Pinned permanently to left, NEVER scrolls away */}
+      {/* 1. LEFT SIDEBAR: Pinned permanently to left, NEVER scrolls up or lifts */}
       <aside className="hidden lg:flex w-64 h-full bg-slate-950 text-slate-300 border-r border-slate-800/80 flex-col shrink-0 z-40 select-none overflow-hidden">
         
-        {/* Brand / Workspace Header (Permanent Top) */}
+        {/* Brand / Header (NO green blink dot per instruction) */}
         <div className="h-16 px-5 border-b border-slate-800/80 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-inner">
@@ -677,7 +793,6 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               </span>
             </div>
           </div>
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Realtime Sync Active" />
         </div>
 
         {/* Super Admin Identity Badge */}
@@ -732,7 +847,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
           >
             <div className="flex items-center gap-2.5">
               <ClipboardList className="w-4 h-4 text-amber-400" />
-              <span>Orders & Leads</span>
+              <span>Orders & Trips</span>
             </div>
             {stats.pending > 0 ? (
               <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full animate-pulse">
@@ -774,8 +889,32 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
           >
             <div className="flex items-center gap-2.5">
               <Calculator className="w-4 h-4 text-indigo-400" />
-              <span>Rate Calculator</span>
+              <span>Fare Calculator</span>
             </div>
+          </button>
+
+          <div className="px-2 pt-3 pb-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500">
+            Website Control
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("cms")}
+            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+              activeTab === "cms"
+                ? "bg-slate-800/90 text-white border border-slate-700/60 shadow-xs"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Globe className="w-4 h-4 text-cyan-400" />
+              <span>Website CMS</span>
+            </div>
+            {reviews.length > 0 && (
+              <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.2 rounded border border-cyan-500/20">
+                {reviews.length} Reviews
+              </span>
+            )}
           </button>
 
           <button
@@ -794,49 +933,27 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
           </button>
         </nav>
 
-        {/* Bottom Status & Audio Controls */}
-        <div className="p-3 border-t border-slate-800/80 space-y-2 bg-slate-950 shrink-0">
-          <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px]">
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <Volume2 className="w-3.5 h-3.5 text-slate-400" /> Sound Bell
-            </span>
-            <button
-              type="button"
-              onClick={toggleSoundMute}
-              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                isSoundMuted 
-                  ? "bg-slate-800 text-slate-400 hover:text-white" 
-                  : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-              }`}
-            >
-              {isSoundMuted ? "Muted" : "Active"}
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between gap-1">
-            <button
-              type="button"
-              onClick={handleTestSound}
-              className="flex-1 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-lg text-[10px] font-medium transition-colors text-center"
-            >
-              Test Chime
-            </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="px-2.5 py-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg text-[10px] font-medium transition-colors flex items-center gap-1"
-              title="Sign out"
-            >
-              <LogOut className="w-3 h-3" />
-            </button>
-          </div>
+        {/* Clean Sidebar Footer (NO sound bell clutter here per instruction) */}
+        <div className="p-3 border-t border-slate-800/80 bg-slate-950 shrink-0 flex items-center justify-between">
+          <span className="text-[11px] text-slate-400">
+            Varanasi, UP
+          </span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="px-2.5 py-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg text-xs font-medium transition-colors flex items-center gap-1"
+            title="Sign out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
       {/* 2. RIGHT MAIN WORKSPACE: Isolated scroll container */}
       <div className="flex-1 h-full flex flex-col min-w-0 overflow-hidden">
         
-        {/* Pinned Top Navbar */}
+        {/* Pinned Top Navbar (NO sound bell clutter here per instruction) */}
         <header className="h-16 shrink-0 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between z-30 shadow-xs select-none">
           
           {/* Breadcrumb / Title */}
@@ -850,19 +967,15 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
                 <span className="hidden sm:inline">Operations</span>
                 <ChevronRight className="w-3 h-3 hidden sm:inline text-slate-400" />
-                <span className="font-semibold text-slate-900 capitalize">{activeTab}</span>
+                <span className="font-semibold text-slate-900 capitalize">
+                  {activeTab === "cms" ? "Website CMS" : activeTab}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Top Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Realtime Live Pulse */}
-            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Realtime Live</span>
-            </div>
-
             {/* Quick Phone Booking Button */}
             <button
               type="button"
@@ -870,17 +983,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-xs transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">New Booking</span>
-            </button>
-
-            {/* Sound Toggle (Mobile / Quick) */}
-            <button
-              type="button"
-              onClick={toggleSoundMute}
-              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
-              title={isSoundMuted ? "Unmute Sound" : "Mute Sound"}
-            >
-              {isSoundMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-emerald-600" />}
+              <span>New Booking</span>
             </button>
 
             {/* Refresh Button */}
@@ -900,7 +1003,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">View Site</span>
+              <span className="hidden sm:inline">Live Website</span>
             </Link>
           </div>
         </header>
@@ -908,7 +1011,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
         {/* WORKSPACE CONTENT SCROLL CONTAINER */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 pb-24 lg:pb-12">
 
-          {/* Realtime Floating Notification Banner (Linear Alert Style) */}
+          {/* Realtime Floating Notification Banner */}
           {newOrderAlert && (
             <div className="p-3.5 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top duration-300">
               <div className="flex items-center gap-3">
@@ -942,7 +1045,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                   }}
                   className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition-colors"
                 >
-                  View
+                  View Order
                 </button>
                 <button
                   type="button"
@@ -959,7 +1062,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
           {activeTab === "dashboard" && (
             <div className="space-y-6">
               
-              {/* Stripe-Style Metric Widgets */}
+              {/* Stripe-Style Metric Widgets (Clean IndianRupee icon per instruction) */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 
                 {/* Metric 1 */}
@@ -1021,11 +1124,11 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                   </p>
                 </div>
 
-                {/* Metric 4 */}
+                {/* Metric 4 (IndianRupee icon replaces $) */}
                 <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-colors">
                   <div className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                    <span>Quoted Revenue</span>
-                    <DollarSign className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Total Booked Fare</span>
+                    <IndianRupee className="w-3.5 h-3.5 text-slate-600" />
                   </div>
                   <div className="mt-3 flex items-baseline gap-1">
                     <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-mono">
@@ -1033,7 +1136,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Total freight booked pipeline
+                    Gross revenue pipeline
                   </p>
                 </div>
 
@@ -1109,7 +1212,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                     </div>
                   )}
 
-                  {/* Recent Operations Activity (Stripe Clean Transaction List) */}
+                  {/* Recent Operations Activity */}
                   <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
                     <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                       <div>
@@ -1253,7 +1356,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                       className="w-full py-2.5 px-3 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 flex items-center justify-center gap-2 shadow-xs transition-colors"
                     >
                       <Calculator className="w-4 h-4 text-indigo-600" />
-                      <span>Open Instant Fare Estimator</span>
+                      <span>Open Fare Estimator</span>
                     </button>
                   </div>
                 </div>
@@ -1263,14 +1366,14 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
             </div>
           )}
 
-          {/* TAB 2: ORDERS & BOOKINGS (Linear / Stripe Style Table Cards) */}
+          {/* TAB 2: ORDERS & TRIPS */}
           {activeTab === "orders" && (
             <div className="space-y-4">
               
               {/* Controls Bar */}
               <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
                 
-                {/* Search Input (Linear Command Style) */}
+                {/* Search Input */}
                 <div className="relative w-full md:w-80">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
@@ -1291,7 +1394,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                   )}
                 </div>
 
-                {/* Linear-Style Segmented Filter Tabs */}
+                {/* Filter Tabs */}
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto w-full md:w-auto">
                   {[
                     { id: "all", label: "All", count: inquiries.length },
@@ -1361,7 +1464,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                           </span>
                         </div>
 
-                        {/* Status Chip (Stripe Style) */}
+                        {/* Status Chip */}
                         <div className="flex items-center gap-2">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                             state.status === "completed"
@@ -1398,7 +1501,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                       {/* Main Card Body */}
                       <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                         
-                        {/* Column 1: Customer & Route (5 cols) */}
+                        {/* Column 1: Customer & Route */}
                         <div className="lg:col-span-5 space-y-3">
                           <div>
                             <div className="flex items-baseline gap-2">
@@ -1417,7 +1520,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                             )}
                           </div>
 
-                          {/* Route Flow (Linear Minimalist Node Style) */}
+                          {/* Route Flow */}
                           <div className="space-y-2 border-l-2 border-slate-200 pl-3 ml-1.5 py-0.5">
                             <div>
                               <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 font-bold block">
@@ -1454,7 +1557,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                           )}
                         </div>
 
-                        {/* Column 2: Driver & Assignment (4 cols) */}
+                        {/* Column 2: Driver & Assignment */}
                         <div className="lg:col-span-4 space-y-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/60">
                           <div className="flex items-center justify-between">
                             <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider font-mono">
@@ -1562,7 +1665,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                           </div>
                         </div>
 
-                        {/* Column 3: Actions & WhatsApp Dispatch (3 cols) */}
+                        {/* Column 3: Actions & WhatsApp Dispatch */}
                         <div className="lg:col-span-3 space-y-2 flex flex-col justify-between h-full">
                           
                           <div className="space-y-1.5">
@@ -1687,7 +1790,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                 </button>
               </div>
 
-              {/* Drivers Grid (Linear Team Directory Style) */}
+              {/* Drivers Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {drivers.map((driver) => (
                   <div
@@ -1867,57 +1970,101 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
             </div>
           )}
 
-          {/* TAB 4: RATE CALCULATOR & OUTSTATION CORRIDORS */}
+          {/* TAB 4: DYNAMIC FARE CALCULATOR */}
           {activeTab === "rates" && (
             <div className="space-y-6">
               
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                {/* Rate Estimator (Stripe Pricing Simulator Style) */}
+                {/* Dynamic Rate Estimator */}
                 <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
-                  <div className="border-b border-slate-100 pb-3">
-                    <h2 className="text-sm font-bold text-slate-900">Varanasi Intra-City Rate Estimator</h2>
-                    <p className="text-xs text-slate-500">Calculate accurate freight based on vehicle, distance & helpers.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                     <div>
-                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
-                        Pickup Hub
-                      </label>
-                      <select
-                        value={calcPickup}
-                        onChange={(e) => setCalcPickup(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
-                      >
-                        {LOCATIONS_FOR_CALC.map((l) => (
-                          <option key={l.id} value={l.id}>{l.name}</option>
-                        ))}
-                      </select>
+                      <h2 className="text-sm font-bold text-slate-900">Dynamic Fare Estimator</h2>
+                      <p className="text-xs text-slate-500">Calculate custom freight based on distance, vehicle, & helpers.</p>
                     </div>
-
-                    <div>
-                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
-                        Drop Hub
-                      </label>
-                      <select
-                        value={calcDrop}
-                        onChange={(e) => setCalcDrop(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
+                    {/* Calculation Mode Toggle */}
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => setCalcMode("hub")}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                          calcMode === "hub" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600"
+                        }`}
                       >
-                        {LOCATIONS_FOR_CALC.map((l) => (
-                          <option key={l.id} value={l.id}>{l.name}</option>
-                        ))}
-                      </select>
+                        Varanasi Hubs
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCalcMode("custom")}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                          calcMode === "custom" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600"
+                        }`}
+                      >
+                        Custom KM
+                      </button>
                     </div>
                   </div>
+
+                  {calcMode === "hub" ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                          Pickup Hub (Varanasi)
+                        </label>
+                        <select
+                          value={calcPickup}
+                          onChange={(e) => setCalcPickup(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
+                        >
+                          {LOCATIONS_FOR_CALC.map((l) => (
+                            <option key={l.id} value={l.id}>{l.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                          Drop Hub
+                        </label>
+                        <select
+                          value={calcDrop}
+                          onChange={(e) => setCalcDrop(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium"
+                        >
+                          {LOCATIONS_FOR_CALC.map((l) => (
+                            <option key={l.id} value={l.id}>{l.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        Trip Distance in Kilometers (KM)
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min="1"
+                          max="200"
+                          value={calcCustomKm}
+                          onChange={(e) => setCalcCustomKm(Number(e.target.value))}
+                          className="flex-1"
+                        />
+                        <div className="w-20 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold text-center">
+                          {calcCustomKm} KM
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="text-[11px] font-semibold text-slate-700 block mb-1">
-                      Vehicle Type
+                      Choose Vehicle Type
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {VEHICLES_FOR_CALC.map((veh) => (
+                      {vehicleRates.map((veh) => (
                         <button
                           key={veh.id}
                           type="button"
@@ -1928,8 +2075,10 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                               : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
                           }`}
                         >
-                          <span className="block text-xs font-bold">{veh.name.split(" ")[0]} {veh.name.split(" ")[1]}</span>
-                          <span className="block text-[10px] text-slate-500 font-mono mt-0.5">₹{veh.baseRate} base</span>
+                          <span className="block text-xs font-bold truncate">{veh.name}</span>
+                          <span className="block text-[10px] text-slate-500 font-mono mt-0.5">
+                            ₹{veh.baseRate} base • ₹{veh.perKm}/km
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -1939,7 +2088,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div>
                       <label className="text-[11px] font-semibold text-slate-700 block mb-1">
-                        Helpers / Labours (₹350 each)
+                        Helpers / Labours (₹{rateHelperCharge} each)
                       </label>
                       <div className="flex items-center gap-2">
                         {[0, 1, 2, 3].map((num) => (
@@ -1961,47 +2110,47 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
 
                     <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
                       <div>
-                        <span className="text-xs font-bold text-slate-900 block">Round Trip</span>
-                        <span className="text-[10px] text-slate-500 block">Return with same cargo</span>
+                        <span className="text-xs font-bold text-slate-900 block">Round Trip (दोतरफा)</span>
+                        <span className="text-[10px] text-slate-500 block">Return trip with cargo</span>
                       </div>
                       <input
                         type="checkbox"
                         checked={calcIsRoundTrip}
                         onChange={(e) => setCalcIsRoundTrip(e.target.checked)}
-                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
                     </div>
                   </div>
 
                 </div>
 
-                {/* Calculation Receipt Card (Stripe Invoice Summary Style) */}
+                {/* Calculation Receipt Card */}
                 <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex flex-col justify-between space-y-4">
                   <div>
                     <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-900 uppercase font-mono tracking-wider">
-                        Fare Quotation Slip
+                        Fare Summary Slip
                       </span>
                       <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                        Estimated
+                        Live Estimate
                       </span>
                     </div>
 
                     <div className="py-4 space-y-2.5 text-xs">
                       <div className="flex justify-between text-slate-600">
-                        <span>Route Corridor:</span>
-                        <span className="font-semibold text-slate-900">{calcResult.pickupName} → {calcResult.dropName}</span>
+                        <span>Trip Route:</span>
+                        <span className="font-semibold text-slate-900 text-right">{calcResult.pickupName} → {calcResult.dropName}</span>
                       </div>
                       <div className="flex justify-between text-slate-600">
-                        <span>One-Way Distance:</span>
+                        <span>Distance:</span>
                         <span className="font-mono font-semibold text-slate-900">{calcResult.distance} KM</span>
                       </div>
                       <div className="flex justify-between text-slate-600">
-                        <span>Base Rate ({calcResult.vehicleName}):</span>
+                        <span>Base Fare ({calcResult.vehicleName.split("(")[0]}):</span>
                         <span className="font-mono text-slate-800">₹{calcResult.baseCost}</span>
                       </div>
                       <div className="flex justify-between text-slate-600">
-                        <span>Distance Charge:</span>
+                        <span>Distance Freight ({calcResult.distance} KM):</span>
                         <span className="font-mono text-slate-800">₹{calcResult.distanceCost}</span>
                       </div>
                       {calcResult.helperCost > 0 && (
@@ -2014,8 +2163,8 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
 
                     <div className="pt-3 border-t border-slate-200/80 flex items-baseline justify-between">
                       <div>
-                        <span className="text-xs font-bold text-slate-900 block">Total Quoted Fare</span>
-                        <span className="text-[10px] text-slate-400">Tolls/Parking actuals extra</span>
+                        <span className="text-xs font-bold text-slate-900 block">Total Quoted Amount</span>
+                        <span className="text-[10px] text-slate-400">Tolls & parking actuals extra</span>
                       </div>
                       <span className="text-2xl font-bold font-mono text-blue-600">
                         ₹{calcResult.totalEstimated}
@@ -2025,25 +2174,28 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
 
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(
-                      `🚚 *कृष्णा ट्रांसपोर्ट - किराया अनुमान*\nरूट: ${calcResult.pickupName} से ${calcResult.dropName} (${calcResult.distance} KM)\nगाड़ी: ${calcResult.vehicleName}\nहेल्पर: ${calcHelpers}\n\n*अनुमानित किराया: ₹${calcResult.totalEstimated}*\n\nरोहित सिंह (+91 70803 60217)`
+                      `🚚 *कृष्णा ट्रांसपोर्ट - किराया कोटेशन*\nरूट: ${calcResult.pickupName} से ${calcResult.dropName} (${calcResult.distance} KM)\nगाड़ी: ${calcResult.vehicleName}\nहेल्पर: ${calcHelpers}\n\n*अनुमानित किराया: ₹${calcResult.totalEstimated}*\n\nरोहित सिंह (+91 70803 60217)`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center gap-2 transition-colors"
                   >
                     <WhatsAppIcon className="w-4 h-4 fill-current" />
-                    <span>Share Quote on WhatsApp</span>
+                    <span>Send Quote via WhatsApp</span>
                   </a>
 
                 </div>
 
               </div>
 
-              {/* Standard Highway Corridors Table (Stripe Clean Data Table) */}
+              {/* Standard Highway Corridors Table */}
               <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-900">Standard Purvanchal Highway Corridors</h3>
-                  <p className="text-xs text-slate-500">Benchmark rates from Salarpur HQ Depot to adjoining districts.</p>
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Standard Purvanchal Highway Corridors</h3>
+                    <p className="text-xs text-slate-500">Benchmark rates from Salarpur HQ Depot to adjoining districts.</p>
+                  </div>
+                  <span className="text-xs font-mono text-slate-500">Same-Day Delivery</span>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -2082,7 +2234,274 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
             </div>
           )}
 
-          {/* TAB 5: SETTINGS & SYSTEM CONFIGURATION */}
+          {/* TAB 5: WEBSITE CMS (Reviews & Vehicle Pricing CMS) */}
+          {activeTab === "cms" && (
+            <div className="space-y-6">
+              
+              {/* Section 1: Customer Reviews & Feedbacks CMS */}
+              <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                      <h2 className="text-sm font-bold text-slate-900">Customer Reviews & Feedback CMS</h2>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Reviews submitted by customers on the tracking portal and customer dashboard.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddReviewModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors self-start sm:self-auto"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Customer Review
+                  </button>
+                </div>
+
+                <div className="divide-y divide-slate-100">
+                  {reviews.map((rev) => (
+                    <div key={rev.id} className="p-4 hover:bg-slate-50/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-slate-900">{rev.customer_name}</span>
+                          {rev.inquiry_code && (
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-slate-600">
+                              {rev.inquiry_code}
+                            </span>
+                          )}
+                          <div className="flex items-center text-amber-400">
+                            {Array.from({ length: rev.rating || 5 }).map((_, i) => (
+                              <Star key={i} className="w-3 h-3 fill-amber-400" />
+                            ))}
+                          </div>
+                          <span className={`text-[10px] font-semibold px-2 py-0.2 rounded-full border ${
+                            rev.is_approved
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : "bg-slate-100 text-slate-500 border-slate-200"
+                          }`}>
+                            {rev.is_approved ? "Approved (Live)" : "Hidden"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700 italic">
+                          "{rev.comment}"
+                        </p>
+                        <span className="text-[10px] text-slate-400 font-mono block">
+                          Submitted on {new Date(rev.created_at).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric"
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleReviewStatus(rev.id, rev.is_approved)}
+                          className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-colors ${
+                            rev.is_approved
+                              ? "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                              : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                          }`}
+                        >
+                          {rev.is_approved ? "Hide from Site" : "Approve & Show"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReview(rev.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
+                          title="Delete Review"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {reviews.length === 0 && (
+                    <div className="p-8 text-center text-slate-500">
+                      <p className="text-xs">No customer reviews yet. Click "+ Add Customer Review" to add testimonials.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Section 2: Vehicle Pricing Rate Configuration */}
+              <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
+                <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">Vehicle Base Fares & Per-KM Pricing CMS</h2>
+                    <p className="text-xs text-slate-500">
+                      Edit rate cards for all transport vehicles. Updates live across the fare calculator and customer estimates.
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                    Varanasi Rates
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {vehicleRates.map((veh, idx) => (
+                    <div key={veh.id} className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900">{veh.name}</span>
+                        <Truck className="w-4 h-4 text-blue-600" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                            Base Fare (₹)
+                          </label>
+                          <input
+                            type="number"
+                            value={veh.baseRate}
+                            onChange={(e) => {
+                              const updated = [...vehicleRates];
+                              updated[idx].baseRate = Number(e.target.value) || 0;
+                              setVehicleRates(updated);
+                            }}
+                            className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                            Rate Per Kilometer (₹/KM)
+                          </label>
+                          <input
+                            type="number"
+                            value={veh.perKm}
+                            onChange={(e) => {
+                              const updated = [...vehicleRates];
+                              updated[idx].perKm = Number(e.target.value) || 0;
+                              setVehicleRates(updated);
+                            }}
+                            className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-600">Helper / Labour Charge:</span>
+                    <input
+                      type="number"
+                      value={rateHelperCharge}
+                      onChange={(e) => setRateHelperCharge(Number(e.target.value) || 350)}
+                      className="w-24 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold"
+                    />
+                    <span className="text-xs text-slate-400">₹ per helper</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSaveVehicleRates(vehicleRates)}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
+                  >
+                    Save All Pricing Changes
+                  </button>
+                </div>
+              </div>
+
+              {/* Add Direct Review Modal */}
+              {showAddReviewModal && (
+                <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4">
+                  <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <h3 className="text-sm font-bold text-slate-900">Add Customer Review / Testimonial</h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddReviewModal(false)}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleAddDirectReview} className="space-y-3 text-xs">
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">Customer Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={revCustName}
+                          onChange={(e) => setRevCustName(e.target.value)}
+                          placeholder="e.g. Ramesh Chandra (Sigra)"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">Customer Phone (Optional)</label>
+                        <input
+                          type="text"
+                          value={revCustPhone}
+                          onChange={(e) => setRevCustPhone(e.target.value)}
+                          placeholder="e.g. 9838000000"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">Rating (1 to 5 Stars)</label>
+                        <div className="flex items-center gap-2">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setRevRating(s)}
+                              className={`p-1.5 rounded-lg border flex items-center justify-center transition-colors ${
+                                revRating >= s ? "border-amber-300 bg-amber-50 text-amber-500" : "border-slate-200 text-slate-300"
+                              }`}
+                            >
+                              <Star className="w-4 h-4 fill-current" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-700 block mb-1">Review Feedback Comment *</label>
+                        <textarea
+                          required
+                          rows={3}
+                          value={revComment}
+                          onChange={(e) => setRevComment(e.target.value)}
+                          placeholder="e.g. बहुत बढ़िया सर्विस, समय पर सामान लंका से गोदौलिया पहुंच गया।"
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium resize-none"
+                        />
+                      </div>
+
+                      <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => setShowAddReviewModal(false)}
+                          className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={savingReview}
+                          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-xs"
+                        >
+                          {savingReview ? "Saving..." : "Publish Review"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
+
+          {/* TAB 6: SETTINGS (Sound Bell Controls Sole Location + Admin Profile) */}
           {activeTab === "settings" && (
             <div className="space-y-6">
               
@@ -2093,7 +2512,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                   <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                     <div>
                       <h2 className="text-sm font-bold text-slate-900">Administrator Profile</h2>
-                      <p className="text-xs text-slate-500">Verified identity & business credentials.</p>
+                      <p className="text-xs text-slate-500">Business credentials & contact desk.</p>
                     </div>
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                       <ShieldCheck className="w-3.5 h-3.5" /> Verified
@@ -2124,46 +2543,60 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
 
                     <div>
                       <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                        WhatsApp Dispatch
+                        WhatsApp Desk
                       </span>
                       <span className="font-mono text-slate-700">+91 70716 34535</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                        Operating Base & Depot
+                      </span>
+                      <span className="text-slate-700">सलारपुर HQ डिपो / लंका चौराहा, वाराणसी</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Realtime Audio Chime Synthesizer */}
+                {/* Sound & Alert Controls (ONLY Location for Sound Bell per instruction) */}
                 <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4 flex flex-col justify-between">
                   <div>
                     <div className="border-b border-slate-100 pb-3">
-                      <h2 className="text-sm font-bold text-slate-900">Audio & Vibration Alerts</h2>
-                      <p className="text-xs text-slate-500">High-pitch sound synthesizer triggered on new booking arrivals.</p>
+                      <h2 className="text-sm font-bold text-slate-900">Sound & Order Ringtone Alert</h2>
+                      <p className="text-xs text-slate-500">
+                        Plays a high-pitch synthetic audio chime whenever a customer submits a new booking.
+                      </p>
                     </div>
 
-                    <div className="py-4 space-y-3">
-                      <div className="flex items-center justify-between">
+                    <div className="py-4 space-y-4">
+                      <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-lg border border-slate-200/60">
                         <div>
-                          <span className="text-xs font-bold text-slate-900 block">Synthetic Bell Ring</span>
-                          <span className="text-[11px] text-slate-500">Zero network latency, runs directly in browser</span>
+                          <span className="text-xs font-bold text-slate-900 block">Sound Bell Status</span>
+                          <span className="text-[11px] text-slate-500">
+                            {isSoundMuted ? "Audio chime is currently muted" : "Audio chime is actively ringing on new bookings"}
+                          </span>
                         </div>
                         <button
                           type="button"
                           onClick={toggleSoundMute}
-                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition-colors ${
+                          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
                             isSoundMuted
-                              ? "bg-slate-100 text-slate-500 border-slate-200"
-                              : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              ? "bg-slate-200 text-slate-600 border-slate-300"
+                              : "bg-emerald-600 text-white border-emerald-600 shadow-xs"
                           }`}
                         >
-                          {isSoundMuted ? "Muted" : "Active"}
+                          {isSoundMuted ? "Sound Off (Muted)" : "Sound On (Active)"}
                         </button>
                       </div>
 
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/60 text-xs text-slate-600 flex items-center justify-between">
-                        <span>Test notification chime right now:</span>
+                      <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200/60 text-xs text-slate-600 flex items-center justify-between">
+                        <div>
+                          <span className="font-bold text-slate-900 block">Test Notification Ringtone</span>
+                          <span className="text-[11px] text-slate-500">Verify audio output on this device</span>
+                        </div>
                         <button
                           type="button"
                           onClick={handleTestSound}
-                          className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-xs transition-colors"
+                          className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
                         >
                           Play Chime
                         </button>
@@ -2172,38 +2605,10 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
                   </div>
 
                   <p className="text-[11px] text-slate-400">
-                    Preferences are saved automatically in your browser's persistent storage.
+                    Preferences are saved automatically in your browser's local memory.
                   </p>
                 </div>
 
-              </div>
-
-              {/* Mobile PWA Installation Guide */}
-              <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
-                <div className="border-b border-slate-100 pb-3">
-                  <h3 className="text-sm font-bold text-slate-900">Install as Full Phone App (PWA)</h3>
-                  <p className="text-xs text-slate-500">How Rohit Singh can install this command suite on any Android phone.</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                  <div className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/50 space-y-1">
-                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">1</span>
-                    <h4 className="font-bold text-slate-900 pt-1">Open in Chrome</h4>
-                    <p className="text-slate-500 text-[11px]">Login once using password or magic link on your phone.</p>
-                  </div>
-
-                  <div className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/50 space-y-1">
-                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">2</span>
-                    <h4 className="font-bold text-slate-900 pt-1">Tap 3 Dots Menu</h4>
-                    <p className="text-slate-500 text-[11px]">Select "Install App" or "Add to Home Screen".</p>
-                  </div>
-
-                  <div className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/50 space-y-1">
-                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">3</span>
-                    <h4 className="font-bold text-slate-900 pt-1">Always Logged In</h4>
-                    <p className="text-slate-500 text-[11px]">Opens like a native Android app without any browser URL bar.</p>
-                  </div>
-                </div>
               </div>
 
             </div>
@@ -2213,7 +2618,7 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
 
       </div>
 
-      {/* 3. QUICK MANUAL BOOKING MODAL (Phone Booking Entry) */}
+      {/* 3. DIRECT PHONE BOOKING MODAL */}
       {showNewBookingModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-200">
@@ -2371,23 +2776,23 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
         <button
           type="button"
           onClick={() => setActiveTab("dashboard")}
-          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+          className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-lg transition-colors ${
             activeTab === "dashboard" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
           }`}
         >
           <LayoutDashboard className="w-4 h-4" />
-          <span className="text-[10px] mt-0.5">Dashboard</span>
+          <span className="text-[9px] mt-0.5">Dashboard</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("orders")}
-          className={`relative flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+          className={`relative flex flex-col items-center justify-center py-1.5 px-2 rounded-lg transition-colors ${
             activeTab === "orders" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
           }`}
         >
           <ClipboardList className="w-4 h-4" />
-          <span className="text-[10px] mt-0.5">Orders</span>
+          <span className="text-[9px] mt-0.5">Orders</span>
           {stats.pending > 0 && (
             <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
           )}
@@ -2396,34 +2801,45 @@ ${inquiry.notes ? `📝 *नोट:* ${inquiry.notes}\n` : ""}
         <button
           type="button"
           onClick={() => setActiveTab("drivers")}
-          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+          className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-lg transition-colors ${
             activeTab === "drivers" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
           }`}
         >
           <Users className="w-4 h-4" />
-          <span className="text-[10px] mt-0.5">Fleet</span>
+          <span className="text-[9px] mt-0.5">Fleet</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("rates")}
-          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+          className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-lg transition-colors ${
             activeTab === "rates" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
           }`}
         >
           <Calculator className="w-4 h-4" />
-          <span className="text-[10px] mt-0.5">Rates</span>
+          <span className="text-[9px] mt-0.5">Rates</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("cms")}
+          className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-lg transition-colors ${
+            activeTab === "cms" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
+          }`}
+        >
+          <Globe className="w-4 h-4" />
+          <span className="text-[9px] mt-0.5">CMS</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("settings")}
-          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-lg transition-colors ${
+          className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-lg transition-colors ${
             activeTab === "settings" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-900 font-medium"
           }`}
         >
           <Settings className="w-4 h-4" />
-          <span className="text-[10px] mt-0.5">Settings</span>
+          <span className="text-[9px] mt-0.5">Settings</span>
         </button>
 
       </nav>

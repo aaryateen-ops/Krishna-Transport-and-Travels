@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { getCustomerInquiries, cancelBooking } from "@/app/actions";
+import { getCustomerInquiries, cancelBooking, submitCustomerReview } from "@/app/actions";
 import { 
   User, 
   Phone, 
@@ -32,7 +32,8 @@ import {
   Activity,
   Layers,
   X,
-  ShieldCheck
+  ShieldCheck,
+  Star
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/useLanguage";
@@ -58,6 +59,13 @@ export default function CustomerDashboard() {
   const [submitCancelLoading, setSubmitCancelLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  // Review & Feedback State
+  const [reviewingInquiry, setReviewingInquiry] = useState<any | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSuccessMsg, setReviewSuccessMsg] = useState("");
 
   useEffect(() => {
     async function loadSessionAndData() {
@@ -156,7 +164,37 @@ export default function CustomerDashboard() {
     }
   };
 
-  // Helper for Status Badge styling (Stripe / Linear Badge Standard)
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewingInquiry || !reviewComment.trim()) return;
+
+    setSubmittingReview(true);
+    try {
+      const result = await submitCustomerReview({
+        inquiryCode: reviewingInquiry.inquiry_code,
+        customerName: userMetadata.full_name || "Valued Customer",
+        customerPhone: userMetadata.phone_number || undefined,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      });
+      if (result.success) {
+        setReviewSuccessMsg("Thank you! Your feedback has been submitted to Rohit Singh.");
+        setTimeout(() => {
+          setReviewingInquiry(null);
+          setReviewSuccessMsg("");
+          setReviewComment("");
+        }, 1800);
+      } else {
+        alert("Failed to submit review. Please try again.");
+      }
+    } catch (err) {
+      alert("Error occurred while submitting review.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // Status Badge styling
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -215,7 +253,6 @@ export default function CustomerDashboard() {
     return matchesFilter && matchesSearch;
   });
 
-  // Aggregate Metrics for Stripe-style Overview
   const activeCount = inquiries.filter((i) => i.status === "pending" || i.status === "contacted" || i.status === "assigned").length;
   const completedCount = inquiries.filter((i) => i.status === "completed").length;
 
@@ -239,7 +276,7 @@ export default function CustomerDashboard() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col antialiased">
       
-      {/* 1. TOP NAVBAR (Stripe / Linear Minimal Header) */}
+      {/* 1. TOP NAVBAR */}
       <header className="h-16 bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           
@@ -310,7 +347,7 @@ export default function CustomerDashboard() {
       {/* 2. MAIN WORKSPACE */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
         
-        {/* Stripe-Style Customer Account Overview Card */}
+        {/* Customer Account Overview Card */}
         <section className="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             
@@ -351,7 +388,7 @@ export default function CustomerDashboard() {
 
           </div>
 
-          {/* Metric Summary Strip (Stripe Metric Tiles) */}
+          {/* Metric Summary Strip */}
           <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 pt-6 border-t border-slate-100">
             <div className="p-3 bg-slate-50/60 rounded-lg border border-slate-100">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
@@ -445,7 +482,7 @@ export default function CustomerDashboard() {
           </div>
         )}
 
-        {/* Bookings List (Linear / Stripe Ticket Style Cards) */}
+        {/* Bookings List */}
         {filteredInquiries.length === 0 ? (
           <div className="bg-white border border-slate-200/80 rounded-xl p-12 text-center shadow-xs">
             <Truck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
@@ -497,7 +534,7 @@ export default function CustomerDashboard() {
                 {/* Body: Route & Cargo Flow */}
                 <div className="p-4 space-y-3.5 flex-1">
                   
-                  {/* Route Visualizer (Linear Style Nodes) */}
+                  {/* Route Visualizer */}
                   <div className="space-y-2 border-l-2 border-slate-200 pl-3 ml-1 py-0.5">
                     <div>
                       <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 font-bold block">
@@ -575,15 +612,32 @@ export default function CustomerDashboard() {
 
                 </div>
 
-                {/* Card Action Footer */}
+                {/* Card Action Footer with Review & Feedback Button */}
                 <div className="p-3.5 bg-slate-50/40 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <Link
-                    href={`/track/${booking.inquiry_code}`}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
-                  >
-                    <span>Track Live</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/track/${booking.inquiry_code}`}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      <span>Track Live</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+
+                    {/* Rate & Review Button for Customer */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReviewingInquiry(booking);
+                        setReviewRating(5);
+                        setReviewComment("");
+                        setReviewSuccessMsg("");
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors"
+                    >
+                      <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                      <span>Review Trip</span>
+                    </button>
+                  </div>
 
                   <div className="flex items-center gap-2">
                     {/* Cancellation Trigger */}
@@ -607,7 +661,7 @@ export default function CustomerDashboard() {
                       className="inline-flex items-center gap-1 px-3 py-1 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
                     >
                       <WhatsAppIcon className="w-3 h-3 fill-current" />
-                      <span>WhatsApp Help</span>
+                      <span>WhatsApp</span>
                     </a>
                   </div>
                 </div>
@@ -619,7 +673,103 @@ export default function CustomerDashboard() {
 
       </main>
 
-      {/* Cancel Booking Modal (Linear Dialog Style) */}
+      {/* Review & Feedback Modal */}
+      {reviewingInquiry && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl border border-slate-200 max-w-md w-full p-5 shadow-xl animate-in fade-in zoom-in-95 duration-150 space-y-4">
+            
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Rate Trip ({reviewingInquiry.inquiry_code})
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Share your review for Rohit Singh and Krishna Transport.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReviewingInquiry(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {reviewSuccessMsg ? (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-1">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                <p className="text-xs font-bold text-emerald-900">{reviewSuccessMsg}</p>
+              </div>
+            ) : (
+              <form onSubmit={handleReviewSubmit} className="space-y-3.5 text-xs">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                    Your Rating (1 to 5 Stars)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        className={`p-2 rounded-lg border transition-all ${
+                          reviewRating >= star 
+                            ? "bg-amber-50 border-amber-300 text-amber-500" 
+                            : "bg-white border-slate-200 text-slate-300"
+                        }`}
+                      >
+                        <Star className="w-5 h-5 fill-current" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                    Your Feedback / Comment *
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="e.g. Excellent service, timely arrival of Tata Ace, and careful handling of furniture..."
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 outline-none rounded-lg text-xs font-medium resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setReviewingInquiry(null)}
+                    className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReview || !reviewComment.trim()}
+                    className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {submittingReview ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <span>Submit Review</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Booking Modal */}
       {cancellingCode && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl border border-slate-200 max-w-md w-full p-5 shadow-xl animate-in fade-in zoom-in-95 duration-150 space-y-4">
